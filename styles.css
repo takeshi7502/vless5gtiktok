@@ -119,6 +119,21 @@ body {
   background: #10b981;
 }
 
+.checking {
+  color: #f59e0b;
+  background: #f59e0b;
+}
+
+.offline {
+  color: #ef4444;
+  background: #ef4444;
+  animation: none;
+}
+
+.status-text-offline {
+  color: #fca5a5;
+}
+
 .sub-box {
   display: flex;
   justify-content: space-between;
