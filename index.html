@@ -37,21 +37,46 @@
         </div>
       </div>
 
-      <div class="sub-box">
-        <code id="sub-url">https://5gtiktok-sub.takeshi.dev/frp_info.config</code>
-        <button id="copy-subscription" class="copy-btn" type="button">Copy URL</button>
-      </div>
-
       <dl class="server-info" aria-label="Thông tin server VLESS">
         <div class="server-info-item">
           <dt>Vị trí server</dt>
-          <dd id="server-location">Đang tải...</dd>
+          <dd>Cloudflare Anycast (Singapore)</dd>
         </div>
         <div class="server-info-item">
           <dt>Node hiện có</dt>
-          <dd id="server-nodes" class="node-list">Đang tải...</dd>
+          <dd id="server-nodes" class="node-list">Đang tải danh sách node...</dd>
         </div>
       </dl>
+
+      <section class="import-panel" aria-labelledby="import-title">
+        <div class="import-panel-heading">
+          <div>
+            <p class="panel-kicker">Android</p>
+            <h3 id="import-title">Nhập đăng ký</h3>
+          </div>
+        </div>
+        <div class="subscription-row">
+          <code id="sub-url" class="subscription-url">https://vless5gtiktok.takeshi.dev/frp_info.config</code>
+          <button id="copy-subscription" class="copy-url-button" type="button" data-subscription-url="https://vless5gtiktok.takeshi.dev/frp_info.config">
+            <span data-copy-label>COPY URL</span>
+          </button>
+        </div>
+        <div class="client-picker" aria-label="Client hỗ trợ nhập subscription">
+          <div class="client-picker-header">
+            <p class="panel-kicker">Nhập vào app trên Android</p>
+          </div>
+          <div class="client-grid">
+            <a class="client-tile" data-client="v2raytun" aria-label="Nhập vào v2RayTun"><img class="client-icon" src="https://img.utdstc.com/icon/c83/b2a/c83b2acfbc454abece6a67314b43f8fc790808d9291a2e053d0f981455eb72fd%3A600" alt="" /><span>v2RayTun</span></a>
+            <a class="client-tile" data-client="v2rayng" aria-label="Nhập vào v2rayNG"><img class="client-icon" src="https://img.utdstc.com/icon/3c5/13d/3c513d861933b6cb765c3c81293c1a66e27c86e6e26b06b8148045cd3ab18796%3A600" alt="" /><span>v2rayNG</span></a>
+            <a class="client-tile" data-client="clash" aria-label="Nhập vào Clash"><img class="client-icon" src="https://upload.wikimedia.org/wikipedia/commons/a/a1/Clash_for_Android_Logo.png" alt="" /><span>Clash</span></a>
+            <a class="client-tile" data-client="surfboard" aria-label="Nhập vào Surfboard"><img class="client-icon" src="https://img.utdstc.com/icon/b16/fa7/b16fa7d68c77849f66e1c725a163a3d72eda7ace1b1a05277a8ba48744f6ce14%3A600" alt="" /><span>Surfboard</span></a>
+            <a class="client-tile" data-client="clashmeta" aria-label="Nhập vào Clash Meta"><img class="client-icon" src="https://img.utdstc.com/icon/026/9c0/0269c0a4851a36da097bd86e8c3bfee7baabe5ae3af59d6f62529f793afbd344%3A600" alt="" /><span>Clash Meta</span></a>
+            <a class="client-tile" data-client="nekobox" aria-label="Nhập vào NekoBox"><img class="client-icon" src="https://img.utdstc.com/icon/ee0/559/ee0559861377397d0a8974b3b947b677536dc784edad76221a1fbc6fc8742cd6%3A600" alt="" /><span>NekoBox</span></a>
+            <a class="client-tile" data-client="singbox" aria-label="Nhập vào sing-box"><img class="client-icon" src="https://img.utdstc.com/icon/5e1/923/5e19230d6ad1b18674da85c21bfa4fbbfb32cf0b9b5c89bcca60d674b6b29863%3A600" alt="" /><span>sing-box</span></a>
+            <a class="client-tile" data-client="hiddify" aria-label="Nhập vào Hiddify"><img class="client-icon" src="https://img.utdstc.com/icon/977/8d8/9778d8cf34baffe317c0e2adf03221556a686043969145dbbef4b5802b443278%3A600" alt="" /><span>Hiddify</span></a>
+          </div>
+        </div>
+      </section>
     </section>
 
     <section class="guide-section" aria-label="Nội dung hướng dẫn">
@@ -60,73 +85,86 @@
         <p><strong>Giải thích đơn giản nhất:</strong> Khi bạn đăng ký gói TikTok, nhà mạng sẽ mở đường truyền “thả ga” cho riêng ứng dụng này. Máy chủ VLESS đóng vai trò như một <strong>“vỏ bọc ngụy trang”</strong>. Khi bạn vào Facebook, YouTube hoặc lướt web, phần mềm VPN trên máy sẽ gom toàn bộ dữ liệu lại, “dán nhãn” giả bên ngoài là lưu lượng xem TikTok rồi gửi đi. Nhà mạng kiểm tra thấy nhãn TikTok nên cho đi qua miễn phí. Khi gói dữ liệu đến máy chủ VLESS, máy chủ sẽ bóc lớp vỏ ngụy trang này ra và giúp bạn kết nối tới trang web đích mong muốn.</p>
       </article>
 
-      <article class="guide-panel pixel-panel guide-panel-wide">
-        <h2 class="section-title">So sánh kinh tế</h2>
-        <p>Gói cước thông thường giới hạn dung lượng khá gắt và có mức chi phí cao hơn so với phương pháp tận dụng nền TikTok. Thông tin gói cước chỉ mang tính tham khảo và có thể thay đổi theo thuê bao.</p>
-        <div class="table-container" tabindex="0" aria-label="Bảng so sánh các gói cước">
-          <table>
-            <thead>
-              <tr>
-                <th>Nhà mạng</th>
-                <th>Gói 5G thông thường<br />(mức &amp; giới hạn)</th>
-                <th>Giải pháp nền TikTok<br />(mức &amp; dung lượng)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Viettel</strong></td>
-                <td>Ngày: ST5K (5k/ngày, 500MB–1GB)<br />Tháng: 3MXH100 (160k/tháng, 1GB/ngày)<br />Năm: 12SD125 (1.500k/năm, 5GB/ngày)</td>
-                <td><strong>T50K</strong> (50k → 50GB/tháng)<br /><strong>T15KN</strong> (60k → 100GB/tháng)<br /><strong>T5K</strong> (150k → 450GB/tháng)<br /><strong>MXH100</strong> (100k → thả ga)</td>
-              </tr>
-              <tr>
-                <td><strong>VinaPhone</strong></td>
-                <td>Ngày: D5 (5k/ngày, 1GB)<br />Tháng: BIG90 (90k/tháng, 7GB tốc độ cao rồi ngắt kết nối)</td>
-                <td><strong>TK30</strong> (30k/tháng → không giới hạn dung lượng nền để bẻ băng thông)</td>
-              </tr>
-              <tr>
-                <td><strong>MobiFone</strong></td>
-                <td>Ngày: D10 (10k/ngày, 8GB tốc độ cao)<br />Tháng: gói HD như 6HD90, khoảng 75k/tháng chỉ được 7GB</td>
-                <td><strong>TT1</strong> (3k/ngày → thả ga)<br /><strong>DK TIK30</strong> (50k → 50GB/tháng)<br /><strong>DK TT80</strong> (80k → thả ga)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <article class="guide-panel pixel-panel guide-panel-wide collapsible-panel">
+        <details>
+          <summary>
+            <span class="section-title">So sánh kinh tế</span>
+            <span class="summary-hint">Mở bảng</span>
+          </summary>
+          <div class="collapsible-content">
+            <p>Gói cước thông thường giới hạn dung lượng khá gắt và có mức chi phí cao hơn so với phương pháp tận dụng nền TikTok. Thông tin gói cước chỉ mang tính tham khảo và có thể thay đổi theo thuê bao.</p>
+            <div class="table-container" tabindex="0" aria-label="Bảng so sánh các gói cước">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nhà mạng</th>
+                    <th>Gói 5G thông thường<br />(mức &amp; giới hạn)</th>
+                    <th>Giải pháp nền TikTok<br />(mức &amp; dung lượng)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Viettel</strong></td>
+                    <td>Ngày: ST5K (5k/ngày, 500MB–1GB)<br />Tháng: 3MXH100 (160k/tháng, 1GB/ngày)<br />Năm: 12SD125 (1.500k/năm, 5GB/ngày)</td>
+                    <td><strong>T50K</strong> (50k → 50GB/tháng)<br /><strong>T15KN</strong> (60k → 100GB/tháng)<br /><strong>T5K</strong> (150k → 450GB/tháng)<br /><strong>MXH100</strong> (100k → thả ga)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>VinaPhone</strong></td>
+                    <td>Ngày: D5 (5k/ngày, 1GB)<br />Tháng: BIG90 (90k/tháng, 7GB tốc độ cao rồi ngắt kết nối)</td>
+                    <td><strong>TK30</strong> (30k/tháng → không giới hạn dung lượng nền để bẻ băng thông)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>MobiFone</strong></td>
+                    <td>Ngày: D10 (10k/ngày, 8GB tốc độ cao)<br />Tháng: gói HD như 6HD90, khoảng 75k/tháng chỉ được 7GB</td>
+                    <td><strong>TT1</strong> (3k/ngày → thả ga)<br /><strong>DK TIK30</strong> (50k → 50GB/tháng)<br /><strong>DK TT80</strong> (80k → thả ga)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
       </article>
 
-      <article class="guide-panel pixel-panel guide-panel-wide">
-        <h2 class="section-title">Đăng ký gói TikTok</h2>
-        <p>Để sử dụng 5G qua server, bạn cần đăng ký gói cước TikTok tương ứng với nhà mạng đang sử dụng.</p>
+      <article class="guide-panel pixel-panel guide-panel-wide collapsible-panel">
+        <details>
+          <summary>
+            <span class="section-title">Đăng ký gói TikTok</span>
+            <span class="summary-hint">Mở hướng dẫn</span>
+          </summary>
+          <div class="collapsible-content">
+            <p>Để sử dụng 5G qua server, bạn cần đăng ký gói cước TikTok tương ứng với nhà mạng đang sử dụng.</p>
 
-        <h3>1. Viettel</h3>
-        <ul>
-          <li>Dưới 50GB/tháng: soạn <span class="highlight">T50K</span> gửi <span class="highlight">191</span> (50k → 50GB/tháng).</li>
-          <li>Dưới 100GB/tháng: soạn <span class="highlight">T15KN</span> gửi <span class="highlight">191</span> (15k/tuần → 25GB/tuần; dùng cả tháng hết 60k, có 100GB).</li>
-          <li>Trên 100GB/tháng: soạn <span class="highlight">T5K</span> gửi <span class="highlight">191</span> (5k/ngày → 15GB/ngày; dùng cả tháng hết 150k, có 450GB).</li>
-          <li>Gói không giới hạn: soạn <span class="highlight">MXH100</span> gửi <span class="highlight">191</span> (100k → không giới hạn nền/tháng; áp dụng theo điều kiện thuê bao).</li>
-        </ul>
+            <h3>1. Viettel</h3>
+            <ul>
+              <li>Dưới 50GB/tháng: soạn <span class="highlight">T50K</span> gửi <span class="highlight">191</span> (50k → 50GB/tháng).</li>
+              <li>Dưới 100GB/tháng: soạn <span class="highlight">T15KN</span> gửi <span class="highlight">191</span> (15k/tuần → 25GB/tuần; dùng cả tháng hết 60k, có 100GB).</li>
+              <li>Trên 100GB/tháng: soạn <span class="highlight">T5K</span> gửi <span class="highlight">191</span> (5k/ngày → 15GB/ngày; dùng cả tháng hết 150k, có 450GB).</li>
+              <li>Gói không giới hạn: soạn <span class="highlight">MXH100</span> gửi <span class="highlight">191</span> (100k → không giới hạn nền/tháng; áp dụng theo điều kiện thuê bao).</li>
+            </ul>
 
-        <h3>2. VinaPhone</h3>
-        <ul>
-          <li>Soạn <span class="highlight">TK30</span> gửi <span class="highlight">888</span> → 30k/không giới hạn nền/tháng.</li>
-          <li><em>Nên để sim 0đ để tránh phát sinh chi phí:</em> vào mục Data 4G/5G → Thẻ data → VinaPhone → chọn gói 1,5k/50MB/30 ngày → Mua ngay → Nạp.</li>
-        </ul>
+            <h3>2. VinaPhone</h3>
+            <ul>
+              <li>Soạn <span class="highlight">TK30</span> gửi <span class="highlight">888</span> → 30k/không giới hạn nền/tháng.</li>
+              <li><em>Nên để sim 0đ để tránh phát sinh chi phí:</em> vào mục Data 4G/5G → Thẻ data → VinaPhone → chọn gói 1,5k/50MB/30 ngày → Mua ngay → Nạp.</li>
+            </ul>
 
-        <h3>3. MobiFone</h3>
-        <ul>
-          <li>Soạn <span class="highlight">DK TIK30</span> gửi <span class="highlight">9199</span> → 50k/50GB/tháng.</li>
-          <li>Soạn <span class="highlight">TT1</span> gửi <span class="highlight">9199</span> → 3k/ngày, không giới hạn dung lượng nền.</li>
-          <li>Soạn <span class="highlight">DK TT80</span> gửi <span class="highlight">9199</span> → 80k/không giới hạn nền/tháng.</li>
-        </ul>
+            <h3>3. MobiFone</h3>
+            <ul>
+              <li>Soạn <span class="highlight">DK TIK30</span> gửi <span class="highlight">9199</span> → 50k/50GB/tháng.</li>
+              <li>Soạn <span class="highlight">TT1</span> gửi <span class="highlight">9199</span> → 3k/ngày, không giới hạn dung lượng nền.</li>
+              <li>Soạn <span class="highlight">DK TT80</span> gửi <span class="highlight">9199</span> → 80k/không giới hạn nền/tháng.</li>
+            </ul>
+          </div>
+        </details>
       </article>
 
       <article class="guide-panel pixel-panel">
         <h2 class="section-title">Android <span>Không Root</span></h2>
-        <h3>v2rayNG</h3>
+        <h3>v2RayTun</h3>
         <ul>
-          <li>Tải và cài đặt <a href="https://github.com/2dust/v2rayNG/releases/latest/download/v2rayNG_2.2.5-fdroid_arm64-v8a.apk" target="_blank" rel="noopener">v2rayNG</a>.</li>
-          <li>Sao chép <strong>Link đăng ký</strong> ở phía trên.</li>
-          <li>Mở v2rayNG trên thiết bị, bấm dấu <strong>[+]</strong> ở góc phải rồi chọn <strong>Nhập cấu hình từ clipboard</strong>.</li>
-          <li>Quay lại danh sách chính, chọn máy chủ TLS hoặc HTTP để kết nối.</li>
+          <li>Cài <a href="https://play.google.com/store/apps/details?id=com.v2raytun.android" target="_blank" rel="noopener">v2RayTun trên Google Play</a>.</li>
+          <li>Chọn <strong>COPY URL</strong> ở phía trên.</li>
+          <li>Trong v2RayTun, nhập cấu hình từ clipboard rồi chọn node để kết nối.</li>
         </ul>
       </article>
 
@@ -138,7 +176,7 @@
           <li>Tải bản phát hành <strong>.zip</strong> mới nhất từ <a href="https://magicv2ray.duckdns.org/" target="_blank" rel="noopener">Magic V2Ray</a>.</li>
           <li>Flash module qua Magisk hoặc KernelSU Manager, sau đó khởi động lại thiết bị.</li>
           <li>Mở Web UI cục bộ bằng nút <strong>Action</strong> trong Magisk hoặc KernelSU.</li>
-          <li>Điền <strong>Link đăng ký</strong>, sau đó chọn <strong>Process Connect Link</strong> để tải danh sách cấu hình.</li>
+          <li>Điền <strong>Link đăng ký</strong> vào ô nhập, sau đó chọn <strong>Process Connect Link</strong> để tải danh sách cấu hình.</li>
         </ul>
       </article>
     </section>

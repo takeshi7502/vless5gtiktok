@@ -1,15 +1,19 @@
 const copyButton = document.getElementById('copy-subscription');
-const subscriptionUrl = document.getElementById('sub-url');
+const copyLabel = copyButton?.querySelector('[data-copy-label]');
+const subscriptionUrl = copyButton?.dataset.subscriptionUrl;
 const statusDot = document.getElementById('server-status-dot');
 const statusText = document.getElementById('server-status-text');
-const serverLocation = document.getElementById('server-location');
 const serverNodes = document.getElementById('server-nodes');
-const healthUrl = 'https://5gtiktok-sub.takeshi.dev/health';
-const serverInfoUrl = 'https://5gtiktok-sub.takeshi.dev/frp_info.json';
 const requestTimeoutMs = 10000;
+const subscriptionName = 'VLESS 5G TikTok';
+const fallbackNodeNames = [
+  'Named Tunnel 1 TLS',
+  'Named Tunnel 1 NO TLS',
+  'Named Tunnel 2 TLS',
+  'Named Tunnel 2 NO TLS',
+];
 
-let isCheckingHealth = false;
-let isLoadingServerInfo = false;
+let isCheckingServer = false;
 
 async function copyText(text) {
   if (navigator.clipboard?.writeText && window.isSecureContext) {
@@ -17,7 +21,7 @@ async function copyText(text) {
       await navigator.clipboard.writeText(text);
       return true;
     } catch (error) {
-      // Continue with the legacy clipboard fallback when permission is denied.
+      // Use the fallback when the browser does not grant Clipboard permission.
     }
   }
 
@@ -41,16 +45,110 @@ async function copyText(text) {
 async function copySubscription() {
   if (!copyButton || !subscriptionUrl) return;
 
-  const didCopy = await copyText(subscriptionUrl.textContent.trim());
-  const defaultLabel = 'Copy URL';
+  const didCopy = await copyText(subscriptionUrl);
+  const defaultLabel = 'COPY URL';
 
-  copyButton.textContent = didCopy ? 'Đã copy!' : 'Copy thất bại';
+  if (copyLabel) {
+    copyLabel.textContent = didCopy ? 'ĐÃ COPY' : 'THỬ LẠI';
+  }
   copyButton.classList.toggle('copied', didCopy);
 
   window.setTimeout(() => {
-    copyButton.textContent = defaultLabel;
+    if (copyLabel) copyLabel.textContent = defaultLabel;
     copyButton.classList.remove('copied');
   }, 2000);
+}
+
+function renderNodeCount(nodeNames) {
+  if (!serverNodes) return;
+
+  const names = nodeNames.filter(Boolean);
+  serverNodes.textContent = `${names.length} node`;
+  serverNodes.title = names.join(' • ');
+  serverNodes.setAttribute('aria-label', `${names.length} node: ${names.join(', ')}`);
+}
+
+function decodeSubscription(text) {
+  const content = text.trim();
+
+  if (/^(vless|vmess|trojan|ss|hysteria2?|tuic):\/\//im.test(content)) {
+    return content;
+  }
+
+  try {
+    return atob(content.replace(/-/g, '+').replace(/_/g, '/'));
+  } catch (error) {
+    return content;
+  }
+}
+
+function getNodeName(link, index) {
+  const hash = link.split('#')[1];
+
+  if (!hash) return `Node ${index + 1}`;
+
+  try {
+    return decodeURIComponent(hash.replace(/\+/g, ' '));
+  } catch (error) {
+    return hash;
+  }
+}
+
+async function loadSubscriptionNodes() {
+  if (!subscriptionUrl) return;
+
+  try {
+    const response = await fetch(subscriptionUrl, {
+      cache: 'no-store',
+      credentials: 'omit',
+    });
+
+    if (!response.ok) throw new Error(`Subscription returned ${response.status}`);
+
+    const links = decodeSubscription(await response.text())
+      .split(/\r?\n/)
+      .map((link) => link.trim())
+      .filter((link) => /^(vless|vmess|trojan|ss|hysteria2?|tuic):\/\//i.test(link));
+
+    if (links.length) {
+      renderNodeCount(links.map(getNodeName));
+    }
+  } catch (error) {
+    // Cross-origin subscriptions can block content reads; the current fallback stays visible.
+  }
+}
+
+function getClientImportLink(client, url) {
+  const encodedUrl = encodeURIComponent(url);
+  const encodedName = encodeURIComponent(subscriptionName);
+
+  switch (client) {
+    case 'v2raytun':
+    case 'v2rayng':
+      return `v2rayng://install-config?url=${encodedUrl}`;
+    case 'clash':
+    case 'nekobox':
+      return `clash://install-config?url=${encodedUrl}&name=${encodedName}`;
+    case 'surfboard':
+      return `surfboard:///install-config?url=${encodedUrl}`;
+    case 'clashmeta':
+      return `clashmeta://install-config?url=${encodedUrl}&name=${encodedName}`;
+    case 'singbox':
+      return `sing-box://import-remote-profile?url=${encodedUrl}#${encodedName}`;
+    case 'hiddify':
+      return `hiddify://import/${url}#${encodedName}`;
+    default:
+      return '';
+  }
+}
+
+function hydrateClientLinks() {
+  if (!subscriptionUrl) return;
+
+  document.querySelectorAll('[data-client]').forEach((client) => {
+    const link = getClientImportLink(client.dataset.client, subscriptionUrl);
+    if (link) client.href = link;
+  });
 }
 
 function setStatus(state, text) {
@@ -69,78 +167,29 @@ function setStatus(state, text) {
   statusText.textContent = text;
 }
 
-async function fetchWithTimeout(url) {
+async function pingSubscriptionUrl() {
+  if (!subscriptionUrl || isCheckingServer) return;
+
+  isCheckingServer = true;
+  setStatus('checking', 'Đang ping link đăng ký...');
+
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), requestTimeoutMs);
 
   try {
-    return await fetch(url, { cache: 'no-store', signal: controller.signal });
+    // no-cors is intentional: this checks network reachability, not the response payload.
+    await fetch(subscriptionUrl, {
+      cache: 'no-store',
+      credentials: 'omit',
+      mode: 'no-cors',
+      signal: controller.signal,
+    });
+    setStatus('online', 'Máy chủ đang trực tuyến');
+  } catch (error) {
+    setStatus('offline', 'Không kết nối được tới máy chủ');
   } finally {
     window.clearTimeout(timeout);
-  }
-}
-
-function getNodeName(node) {
-  const vlessUrl = typeof node === 'string' ? node : node?.url || node?.link || node?.vless || '';
-
-  try {
-    const hash = vlessUrl.split('#')[1] || node?.name || 'VLESS Node';
-    return decodeURIComponent(hash.replace(/\+/g, ' '));
-  } catch (error) {
-    return node?.name || 'VLESS Node';
-  }
-}
-
-function getServerLocation(data) {
-  return data.location || data.server_location || data.region || data.country || 'Chưa cập nhật';
-}
-
-async function loadServerInfo() {
-  if (!serverLocation || !serverNodes || isLoadingServerInfo) return;
-
-  isLoadingServerInfo = true;
-
-  try {
-    const response = await fetchWithTimeout(serverInfoUrl);
-    if (!response.ok) throw new Error('Server info unavailable');
-
-    const data = await response.json();
-    const payloads = Array.isArray(data.payloads)
-      ? data.payloads
-      : Array.isArray(data.nodes)
-        ? data.nodes
-        : [];
-    const nodeNames = payloads.map(getNodeName).filter(Boolean);
-
-    serverLocation.textContent = getServerLocation(data);
-    serverNodes.textContent = nodeNames.length ? nodeNames.join(' • ') : 'Chưa có node';
-  } catch (error) {
-    serverLocation.textContent = 'Không rõ';
-    serverNodes.textContent = 'Không tải được danh sách node';
-  } finally {
-    isLoadingServerInfo = false;
-  }
-}
-
-async function checkServerHealth() {
-  if (isCheckingHealth) return;
-
-  isCheckingHealth = true;
-  setStatus('checking', 'Đang kiểm tra hạ tầng...');
-
-  try {
-    const response = await fetchWithTimeout(healthUrl);
-    if (!response.ok) throw new Error('Health check failed');
-
-    const data = await response.json();
-    setStatus(
-      data.online ? 'online' : 'offline',
-      data.online ? 'Hạ tầng Cloudflare Anycast đang hoạt động' : 'Hạ tầng tạm thời offline'
-    );
-  } catch (error) {
-    setStatus('offline', 'Không kiểm tra được trạng thái hạ tầng');
-  } finally {
-    isCheckingHealth = false;
+    isCheckingServer = false;
   }
 }
 
@@ -148,7 +197,9 @@ if (copyButton && subscriptionUrl) {
   copyButton.addEventListener('click', copySubscription);
 }
 
-checkServerHealth();
-loadServerInfo();
-window.setInterval(checkServerHealth, 60000);
-window.setInterval(loadServerInfo, 300000);
+renderNodeCount(fallbackNodeNames);
+hydrateClientLinks();
+pingSubscriptionUrl();
+loadSubscriptionNodes();
+window.setInterval(pingSubscriptionUrl, 60000);
+window.setInterval(loadSubscriptionNodes, 300000);
