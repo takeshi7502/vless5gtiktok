@@ -6,21 +6,49 @@ const serverLocation = document.getElementById('server-location');
 const serverNodes = document.getElementById('server-nodes');
 const healthUrl = 'https://5gtiktok-sub.takeshi.dev/health';
 const serverInfoUrl = 'https://5gtiktok-sub.takeshi.dev/frp_info.json';
+const requestTimeoutMs = 10000;
 
-async function copySubscription() {
-  const text = subscriptionUrl.innerText.trim();
+let isCheckingHealth = false;
+let isLoadingServerInfo = false;
 
-  try {
-    await navigator.clipboard.writeText(text);
-    copyButton.innerText = 'Copied!';
-    copyButton.classList.add('copied');
-  } catch (error) {
-    alert('Không thể sao chép tự động, vui lòng chọn text và copy thủ công.');
-    return;
+async function copyText(text) {
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      // Continue with the legacy clipboard fallback when permission is denied.
+    }
   }
 
-  setTimeout(() => {
-    copyButton.innerText = 'Copy URL';
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.setAttribute('readonly', '');
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.append(textArea);
+
+  try {
+    textArea.select();
+    return document.execCommand('copy');
+  } catch (error) {
+    return false;
+  } finally {
+    textArea.remove();
+  }
+}
+
+async function copySubscription() {
+  if (!copyButton || !subscriptionUrl) return;
+
+  const didCopy = await copyText(subscriptionUrl.textContent.trim());
+  const defaultLabel = 'Copy URL';
+
+  copyButton.textContent = didCopy ? 'Đã copy!' : 'Copy thất bại';
+  copyButton.classList.toggle('copied', didCopy);
+
+  window.setTimeout(() => {
+    copyButton.textContent = defaultLabel;
     copyButton.classList.remove('copied');
   }, 2000);
 }
@@ -28,47 +56,60 @@ async function copySubscription() {
 function setStatus(state, text) {
   if (!statusDot || !statusText) return;
 
-  statusDot.classList.remove('checking', 'online', 'offline');
+  statusDot.classList.remove('checking', 'online', 'offline', 'pulse-dot');
   statusText.classList.remove('status-text-offline');
-
   statusDot.classList.add(state);
+
   if (state === 'online' || state === 'checking') {
     statusDot.classList.add('pulse-dot');
   } else {
-    statusDot.classList.remove('pulse-dot');
     statusText.classList.add('status-text-offline');
   }
 
   statusText.textContent = text;
 }
 
-function getNodeName(vlessUrl) {
+async function fetchWithTimeout(url) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), requestTimeoutMs);
+
   try {
-    const hash = vlessUrl.split('#')[1] || 'VLESS Node';
+    return await fetch(url, { cache: 'no-store', signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function getNodeName(node) {
+  const vlessUrl = typeof node === 'string' ? node : node?.url || node?.link || node?.vless || '';
+
+  try {
+    const hash = vlessUrl.split('#')[1] || node?.name || 'VLESS Node';
     return decodeURIComponent(hash.replace(/\+/g, ' '));
   } catch (error) {
-    return 'VLESS Node';
+    return node?.name || 'VLESS Node';
   }
 }
 
 function getServerLocation(data) {
-  const location = data.location || data.server_location || data.region || data.country;
-  if (location) return location;
-
-  const host = `${data.wshost || ''} ${data.ip || ''}`.toLowerCase();
-  if (host.includes('singapore') || host.includes('sin')) return 'Singapore';
-  return 'Singapore';
+  return data.location || data.server_location || data.region || data.country || 'Chưa cập nhật';
 }
 
 async function loadServerInfo() {
-  if (!serverLocation || !serverNodes) return;
+  if (!serverLocation || !serverNodes || isLoadingServerInfo) return;
+
+  isLoadingServerInfo = true;
 
   try {
-    const response = await fetch(serverInfoUrl, { cache: 'no-store' });
+    const response = await fetchWithTimeout(serverInfoUrl);
     if (!response.ok) throw new Error('Server info unavailable');
 
     const data = await response.json();
-    const payloads = Array.isArray(data.payloads) ? data.payloads : [];
+    const payloads = Array.isArray(data.payloads)
+      ? data.payloads
+      : Array.isArray(data.nodes)
+        ? data.nodes
+        : [];
     const nodeNames = payloads.map(getNodeName).filter(Boolean);
 
     serverLocation.textContent = getServerLocation(data);
@@ -76,30 +117,38 @@ async function loadServerInfo() {
   } catch (error) {
     serverLocation.textContent = 'Không rõ';
     serverNodes.textContent = 'Không tải được danh sách node';
+  } finally {
+    isLoadingServerInfo = false;
   }
 }
 
 async function checkServerHealth() {
+  if (isCheckingHealth) return;
+
+  isCheckingHealth = true;
   setStatus('checking', 'Đang kiểm tra hạ tầng...');
 
   try {
-    const response = await fetch(healthUrl, { cache: 'no-store' });
+    const response = await fetchWithTimeout(healthUrl);
     if (!response.ok) throw new Error('Health check failed');
 
     const data = await response.json();
-
-    if (data.online) {
-      setStatus('online', 'Hạ tầng Cloudflare Anycast Active');
-    } else {
-      setStatus('offline', 'Hạ tầng tạm thời Offline');
-    }
+    setStatus(
+      data.online ? 'online' : 'offline',
+      data.online ? 'Hạ tầng Cloudflare Anycast đang hoạt động' : 'Hạ tầng tạm thời offline'
+    );
   } catch (error) {
-    setStatus('offline', 'Không kiểm tra được trạng thái');
+    setStatus('offline', 'Không kiểm tra được trạng thái hạ tầng');
+  } finally {
+    isCheckingHealth = false;
   }
 }
 
-copyButton.addEventListener('click', copySubscription);
+if (copyButton && subscriptionUrl) {
+  copyButton.addEventListener('click', copySubscription);
+}
+
 checkServerHealth();
 loadServerInfo();
-setInterval(checkServerHealth, 60000);
-setInterval(loadServerInfo, 300000);
+window.setInterval(checkServerHealth, 60000);
+window.setInterval(loadServerInfo, 300000);

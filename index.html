@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VLESS 5G Tiktok Free</title>
-  <meta name="description" content="Máy chủ thử nghiệm VLESS miễn phí cho 5G nền TikTok, kèm link đăng ký, nguyên lý hoạt động, so sánh gói cước và hướng dẫn sử dụng trên Android." />
+  <meta name="theme-color" content="#12101f" />
+  <title>VLESS 5G TikTok | Gateway</title>
+  <meta name="description" content="Thông tin máy chủ thử nghiệm VLESS cho dữ liệu 4G/5G nền TikTok, trạng thái hạ tầng và hướng dẫn cấu hình Android." />
   <link rel="icon" type="image/jpeg" href="https://sf-static.upanhlaylink.com/img/image_2026070608e9764ab8c801c692150da94c52a4a4.jpg" />
   <link rel="apple-touch-icon" href="https://sf-static.upanhlaylink.com/img/image_20260706d251203081bd2fb50d8bad298b7cb2cf.jpg" />
   <link rel="stylesheet" href="./styles.css" />
@@ -15,122 +16,136 @@
 </head>
 <body>
   <main class="container">
-    <header class="hero">
-      <h1 class="title">Máy chủ thử nghiệm VLESS miễn phí<br />Data 4G/5G nền TikTok</h1>
+    <header class="hero" aria-labelledby="page-title">
+      <div class="hero-image" role="img" aria-label="Khung cảnh pixel-art ban đêm với cổng phát sáng và nhân vật chibi"></div>
+      <div class="hero-content">
+        <p class="eyebrow"><span class="pixel-spark" aria-hidden="true"></span> VLESS Gateway</p>
+        <h1 id="page-title" class="title">VLESS SERVER MIỄN PHÍ</h1>
+        <p class="hero-description">Data 4G/5G nền TikTok</p>
+      </div>
     </header>
 
-    <section class="card sub-card" aria-label="Link đăng ký VLESS-WS">
-      <span class="label">Link đăng ký (VLESS-WS)</span>
-      <div class="status">
-        <span id="server-status-dot" class="dot checking pulse-dot"></span>
-        <span id="server-status-text">Đang kiểm tra hạ tầng...</span>
+    <section class="connection-panel pixel-panel" aria-labelledby="connection-title">
+      <div class="panel-heading">
+        <div>
+          <p class="panel-kicker">Link đăng ký (VLESS-WS)</p>
+          <h2 id="connection-title">Cổng kết nối</h2>
+        </div>
+        <div class="status" aria-live="polite">
+          <span id="server-status-dot" class="dot checking pulse-dot" aria-hidden="true"></span>
+          <span id="server-status-text">Đang kiểm tra hạ tầng...</span>
+        </div>
       </div>
+
       <div class="sub-box">
-        <span id="sub-url">https://5gtiktok-sub.takeshi.dev/frp_info.config</span>
+        <code id="sub-url">https://5gtiktok-sub.takeshi.dev/frp_info.config</code>
         <button id="copy-subscription" class="copy-btn" type="button">Copy URL</button>
       </div>
-      <div class="server-info" aria-label="Thông tin server VLESS">
+
+      <dl class="server-info" aria-label="Thông tin server VLESS">
         <div class="server-info-item">
-          <span>Vị trí server</span>
-          <strong id="server-location">Đang tải...</strong>
+          <dt>Vị trí server</dt>
+          <dd id="server-location">Đang tải...</dd>
         </div>
         <div class="server-info-item">
-          <span>Node hiện có</span>
-          <strong id="server-nodes" class="node-list">Đang tải...</strong>
+          <dt>Node hiện có</dt>
+          <dd id="server-nodes" class="node-list">Đang tải...</dd>
         </div>
-      </div>
+      </dl>
     </section>
 
-    <section class="instruction-section" aria-label="Nội dung hướng dẫn">
-      <h2 class="section-title">Nguyên lý hoạt động (Bẻ băng thông)</h2>
-      <div class="guide-box">
-        <p><b>Giải thích đơn giản nhất:</b> Khi bạn đăng ký gói TikTok, nhà mạng sẽ mở đường truyền "thả ga" cho riêng ứng dụng này. Máy chủ VLESS đóng vai trò như một <b>"vỏ bọc ngụy trang"</b>. Khi bạn vào Facebook, YouTube, hay lướt Web, phần mềm VPN trên máy sẽ gom toàn bộ dữ liệu đó lại, "dán nhãn" giả vờ bên ngoài là lưu lượng xem TikTok rồi gửi đi. Nhà mạng kiểm tra thấy nhãn TikTok nên cho đi qua miễn phí. Khi gói dữ liệu đến được máy chủ VLESS, máy chủ sẽ bóc lớp vỏ ngụy trang này ra và giúp bạn kết nối tới trang web đích mong muốn.</p>
-      </div>
+    <section class="guide-section" aria-label="Nội dung hướng dẫn">
+      <article class="guide-panel pixel-panel guide-panel-wide">
+        <h2 class="section-title">Nguyên lý hoạt động <span>(Bẻ băng thông)</span></h2>
+        <p><strong>Giải thích đơn giản nhất:</strong> Khi bạn đăng ký gói TikTok, nhà mạng sẽ mở đường truyền “thả ga” cho riêng ứng dụng này. Máy chủ VLESS đóng vai trò như một <strong>“vỏ bọc ngụy trang”</strong>. Khi bạn vào Facebook, YouTube hoặc lướt web, phần mềm VPN trên máy sẽ gom toàn bộ dữ liệu lại, “dán nhãn” giả bên ngoài là lưu lượng xem TikTok rồi gửi đi. Nhà mạng kiểm tra thấy nhãn TikTok nên cho đi qua miễn phí. Khi gói dữ liệu đến máy chủ VLESS, máy chủ sẽ bóc lớp vỏ ngụy trang này ra và giúp bạn kết nối tới trang web đích mong muốn.</p>
+      </article>
 
-      <h2 class="section-title">So sánh Kinh tế: Nền TikTok vs Gói 5G thông thường</h2>
-      <div class="guide-box">
-        <p>Gói cước thông thường giới hạn dung lượng khá gắt và có mức chi phí đắt hơn rất nhiều so với phương pháp tận dụng nền TikTok:</p>
-        <div class="table-container">
+      <article class="guide-panel pixel-panel guide-panel-wide">
+        <h2 class="section-title">So sánh kinh tế</h2>
+        <p>Gói cước thông thường giới hạn dung lượng khá gắt và có mức chi phí cao hơn so với phương pháp tận dụng nền TikTok. Thông tin gói cước chỉ mang tính tham khảo và có thể thay đổi theo thuê bao.</p>
+        <div class="table-container" tabindex="0" aria-label="Bảng so sánh các gói cước">
           <table>
             <thead>
               <tr>
                 <th>Nhà mạng</th>
-                <th>Gói 5G Thông Thường (Mắc &amp; Giới hạn)</th>
-                <th>Giải Pháp Nền TikTok (Rẻ &amp; Khủng)</th>
+                <th>Gói 5G thông thường<br />(mức &amp; giới hạn)</th>
+                <th>Giải pháp nền TikTok<br />(mức &amp; dung lượng)</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><b>Viettel</b></td>
-                <td>• Ngày: ST5K (5k/ngày, 500MB-1GB)<br>• Tháng: 3MXH100 (160k/tháng, 1GB/ngày)<br>• Năm: 12SD125 (1.500k/năm, 5GB/ngày)</td>
-                <td>• <b>T50K</b> (50k &rarr; 50GB/tháng)<br>• <b>T15KN</b> (60k &rarr; 100GB/tháng)<br>• <b>T5K</b> (150k &rarr; 450GB/tháng)<br>• <b>MXH100</b> (100k &rarr; Thả ga)</td>
+                <td><strong>Viettel</strong></td>
+                <td>Ngày: ST5K (5k/ngày, 500MB–1GB)<br />Tháng: 3MXH100 (160k/tháng, 1GB/ngày)<br />Năm: 12SD125 (1.500k/năm, 5GB/ngày)</td>
+                <td><strong>T50K</strong> (50k → 50GB/tháng)<br /><strong>T15KN</strong> (60k → 100GB/tháng)<br /><strong>T5K</strong> (150k → 450GB/tháng)<br /><strong>MXH100</strong> (100k → thả ga)</td>
               </tr>
               <tr>
-                <td><b>VinaPhone</b></td>
-                <td>• Ngày: D5 (5k/ngày, 1GB)<br>• Tháng: BIG90 (90k/tháng, chỉ có 7GB dung lượng cao rồi ngắt kết nối)</td>
-                <td>• <b>TK30</b> (30k/tháng &rarr; Không giới hạn dung lượng nền để bẻ băng thông)</td>
+                <td><strong>VinaPhone</strong></td>
+                <td>Ngày: D5 (5k/ngày, 1GB)<br />Tháng: BIG90 (90k/tháng, 7GB tốc độ cao rồi ngắt kết nối)</td>
+                <td><strong>TK30</strong> (30k/tháng → không giới hạn dung lượng nền để bẻ băng thông)</td>
               </tr>
               <tr>
-                <td><b>MobiFone</b></td>
-                <td>• Ngày: D10 (10k/ngày, 8GB tốc độ cao)<br>• Tháng: Các gói HD như 6HD90 tính ra khoảng 75k/tháng chỉ được 7GB</td>
-                <td>• <b>TT1</b> (3k/ngày &rarr; Thả ga)<br>• <b>DK TIK30</b> (50k &rarr; 50GB/tháng)<br>• <b>DK TT80</b> (80k &rarr; Thả ga)</td>
+                <td><strong>MobiFone</strong></td>
+                <td>Ngày: D10 (10k/ngày, 8GB tốc độ cao)<br />Tháng: gói HD như 6HD90, khoảng 75k/tháng chỉ được 7GB</td>
+                <td><strong>TT1</strong> (3k/ngày → thả ga)<br /><strong>DK TIK30</strong> (50k → 50GB/tháng)<br /><strong>DK TT80</strong> (80k → thả ga)</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
+      </article>
 
-      <h2 class="section-title">Hướng dẫn đăng ký gói cước TikTok các nhà mạng</h2>
-      <div class="guide-box">
-        <p>Để xài 5G Miễn phí thông qua server, bạn cần đăng ký gói cước TikTok tương ứng với nhà mạng đang sử dụng:</p>
-        <p><b>1. Viettel (Chọn gói theo nhu cầu):</b></p>
+      <article class="guide-panel pixel-panel guide-panel-wide">
+        <h2 class="section-title">Đăng ký gói TikTok</h2>
+        <p>Để sử dụng 5G qua server, bạn cần đăng ký gói cước TikTok tương ứng với nhà mạng đang sử dụng.</p>
+
+        <h3>1. Viettel</h3>
         <ul>
-          <li>Dưới 50GB/tháng: Soạn <span class="highlight">T50K</span> gửi <span class="highlight">191</span> (50k &rarr; có 50GB/tháng)</li>
-          <li>Dưới 100GB/tháng: Soạn <span class="highlight">T15KN</span> gửi <span class="highlight">191</span> (15k/tuần &rarr; có 25GB/tuần. Dùng cả tháng hết 60k có 100GB, tự động gia hạn theo tuần)</li>
-          <li>Trên 100GB/tháng: Soạn <span class="highlight">T5K</span> gửi <span class="highlight">191</span> (5k/ngày &rarr; có 15GB/ngày. Dùng cả tháng hết 150k có 450GB, tự động gia hạn theo ngày)</li>
-          <li>Gói không giới hạn: Soạn <span class="highlight">MXH100</span> gửi <span class="highlight">191</span> (100k &rarr; Không giới hạn nền/tháng. Chỉ áp dụng cho thuê bao di động trả trước kích hoạt mới từ 01/01/2023)</li>
+          <li>Dưới 50GB/tháng: soạn <span class="highlight">T50K</span> gửi <span class="highlight">191</span> (50k → 50GB/tháng).</li>
+          <li>Dưới 100GB/tháng: soạn <span class="highlight">T15KN</span> gửi <span class="highlight">191</span> (15k/tuần → 25GB/tuần; dùng cả tháng hết 60k, có 100GB).</li>
+          <li>Trên 100GB/tháng: soạn <span class="highlight">T5K</span> gửi <span class="highlight">191</span> (5k/ngày → 15GB/ngày; dùng cả tháng hết 150k, có 450GB).</li>
+          <li>Gói không giới hạn: soạn <span class="highlight">MXH100</span> gửi <span class="highlight">191</span> (100k → không giới hạn nền/tháng; áp dụng theo điều kiện thuê bao).</li>
         </ul>
 
-        <p class="sub-heading"><b>2. VinaPhone (Thực hiện lần lượt các bước):</b></p>
+        <h3>2. VinaPhone</h3>
         <ul>
-          <li>Soạn <span class="highlight">TK30</span> gửi <span class="highlight">888</span> &rarr; 30k/không giới hạn nền/tháng</li>
-          <li><i>Nên để sim 0đ tránh bị trừ tiền hoặc truy cập MoMo:</i> Vào mục Data 4G/5G &rarr; Thẻ data &rarr; Vinaphone &rarr; Chọn gói 1,5k/50MB/30 ngày &rarr; Mua ngay &rarr; Nạp.</li>
+          <li>Soạn <span class="highlight">TK30</span> gửi <span class="highlight">888</span> → 30k/không giới hạn nền/tháng.</li>
+          <li><em>Nên để sim 0đ để tránh phát sinh chi phí:</em> vào mục Data 4G/5G → Thẻ data → VinaPhone → chọn gói 1,5k/50MB/30 ngày → Mua ngay → Nạp.</li>
         </ul>
 
-        <p class="sub-heading"><b>3. MobiFone (Chọn 1 trong các gói):</b></p>
+        <h3>3. MobiFone</h3>
         <ul>
-          <li>Soạn <span class="highlight">DK TIK30</span> gửi <span class="highlight">9199</span> &rarr; 50k/50GB/tháng</li>
-          <li>Soạn <span class="highlight">TT1</span> gửi <span class="highlight">9199</span> &rarr; 3K/ngày (không giới hạn dung lượng nền)</li>
-          <li>Soạn <span class="highlight">DK TT80</span> gửi <span class="highlight">9199</span> &rarr; 80k/không giới hạn nền/tháng</li>
+          <li>Soạn <span class="highlight">DK TIK30</span> gửi <span class="highlight">9199</span> → 50k/50GB/tháng.</li>
+          <li>Soạn <span class="highlight">TT1</span> gửi <span class="highlight">9199</span> → 3k/ngày, không giới hạn dung lượng nền.</li>
+          <li>Soạn <span class="highlight">DK TT80</span> gửi <span class="highlight">9199</span> → 80k/không giới hạn nền/tháng.</li>
         </ul>
-      </div>
+      </article>
 
-      <h2 class="section-title">Android (Không Root) - v2rayNG</h2>
-      <div class="guide-box">
+      <article class="guide-panel pixel-panel">
+        <h2 class="section-title">Android <span>Không Root</span></h2>
+        <h3>v2rayNG</h3>
         <ul>
-          <li>Tải và cài đặt ứng dụng <span class="highlight"><a href="https://github.com/2dust/v2rayNG/releases/latest/download/v2rayNG_2.2.5-fdroid_arm64-v8a.apk" target="_blank" rel="noopener">v2rayNG</a></span>.</li>
-          <li>Sao chép <b>Link đăng ký</b> phía trên.</li>
-          <li>Mở ứng dụng <span class="highlight"><a href="https://github.com/2dust/v2rayNG/releases/latest/download/v2rayNG_2.2.5-fdroid_arm64-v8a.apk" target="_blank" rel="noopener">v2rayNG</a></span> trên thiết bị.</li>
-          <li>Bấm vào dấu <b>[+]</b> ở góc phải, chọn <b>Nhập cấu hình từ clipboard</b>.</li>
-          <li>Quay trở lại giao diện danh sách chính, chọn máy chủ TLS hoặc HTTP để kết nối.</li>
+          <li>Tải và cài đặt <a href="https://github.com/2dust/v2rayNG/releases/latest/download/v2rayNG_2.2.5-fdroid_arm64-v8a.apk" target="_blank" rel="noopener">v2rayNG</a>.</li>
+          <li>Sao chép <strong>Link đăng ký</strong> ở phía trên.</li>
+          <li>Mở v2rayNG trên thiết bị, bấm dấu <strong>[+]</strong> ở góc phải rồi chọn <strong>Nhập cấu hình từ clipboard</strong>.</li>
+          <li>Quay lại danh sách chính, chọn máy chủ TLS hoặc HTTP để kết nối.</li>
         </ul>
-      </div>
+      </article>
 
-      <h2 class="section-title">Android (Rooted) - Magic V2Ray Module</h2>
-      <div class="guide-box">
-        <p><i>Magic V2Ray là một công cụ mạng nâng cao được thiết kế riêng cho điện thoại Android đã root. Bằng cách kết hợp các lõi proxy hàng đầu hiện nay, dự án tạo ra một kết nối mượt mà xuyên suốt toàn hệ thống và bao phủ mọi ứng dụng của bạn.</i></p>
+      <article class="guide-panel pixel-panel">
+        <h2 class="section-title">Android <span>Đã Root</span></h2>
+        <h3>Magic V2Ray Module</h3>
+        <p><em>Magic V2Ray là công cụ mạng dành cho Android đã root, tạo kết nối xuyên suốt toàn hệ thống và bao phủ các ứng dụng trên thiết bị.</em></p>
         <ul>
-          <li>Tải xuống bản phát hành <b>.zip</b> mới nhất từ trang GitHub chính thức của dự án <a href="https://magicv2ray.duckdns.org/" target="_blank" rel="noopener"><span class="highlight">Magic V2Ray</span></a>.</li>
-          <li>Flash file module thông qua trình quản lý <b>Magisk</b> hoặc <b>KernelSU manager</b>, sau đó tiến hành khởi động lại thiết bị.</li>
-          <li>Mở giao diện cấu hình Web UI cục bộ của ứng dụng bằng cách nhấn nút <b>Action</b> bên trong quản lý Magisk / KernelSU.</li>
-          <li>Điền <b>Link đăng ký</b> vào ô nhập và nhấn nút <b>Process Connect Link</b> để tải danh sách cấu hình.</li>
+          <li>Tải bản phát hành <strong>.zip</strong> mới nhất từ <a href="https://magicv2ray.duckdns.org/" target="_blank" rel="noopener">Magic V2Ray</a>.</li>
+          <li>Flash module qua Magisk hoặc KernelSU Manager, sau đó khởi động lại thiết bị.</li>
+          <li>Mở Web UI cục bộ bằng nút <strong>Action</strong> trong Magisk hoặc KernelSU.</li>
+          <li>Điền <strong>Link đăng ký</strong>, sau đó chọn <strong>Process Connect Link</strong> để tải danh sách cấu hình.</li>
         </ul>
-      </div>
+      </article>
     </section>
 
     <footer class="footer">
-      <div>VLESS 5G TikTok • Free Gateway • Updated by <a href="https://takeshi.dev/" target="_blank" rel="noopener">Takeshi.dev</a></div>
-      <div>Design by HuskyDG (Thế Vĩ)</div>
+      <div>VLESS 5G TikTok <span aria-hidden="true">•</span> Free Gateway <span aria-hidden="true">•</span> Updated by <a href="https://takeshi.dev/" target="_blank" rel="noopener">Takeshi.dev</a></div>
+      <div>Thanks HuskyDG</div>
     </footer>
   </main>
 
