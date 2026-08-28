@@ -5,6 +5,7 @@ const statusDot = document.getElementById('server-status-dot');
 const statusText = document.getElementById('server-status-text');
 const serverNodes = document.getElementById('server-nodes');
 const serverNodeList = document.getElementById('server-node-list');
+const nodePanel = document.querySelector('.node-panel');
 const requestTimeoutMs = 10000;
 const subscriptionName = 'VLESS 5G TikTok';
 const subscriptionDataUrl = '/subscription-source';
@@ -176,6 +177,7 @@ function setStatus(state, text) {
   statusDot.classList.remove('checking', 'online', 'offline', 'pulse-dot');
   statusText.classList.remove('status-text-offline');
   statusDot.classList.add(state);
+  nodePanel?.classList.toggle('is-online', state === 'online');
 
   if (state === 'online' || state === 'checking') {
     statusDot.classList.add('pulse-dot');
