@@ -307,6 +307,44 @@ select {
   color: var(--mint) !important;
 }
 
+.node-panel {
+  margin-top: 15px;
+  border: 1px solid var(--line-soft);
+  background: rgba(9, 10, 20, 0.32);
+}
+
+.node-panel .section-title {
+  font-size: 0.96rem;
+}
+
+.node-panel .summary-hint {
+  min-width: 0;
+}
+
+.node-details-content {
+  padding-block: 14px 16px;
+}
+
+.node-detail-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.node-detail-list li {
+  padding: 9px 10px;
+  border: 1px solid var(--line-soft);
+  background: #121221;
+  color: #fff8ef;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .subscription-row {
   display: flex;
   min-width: 0;
@@ -902,6 +940,14 @@ table td:nth-child(3) {
 
   .server-info dd {
     font-size: 0.78rem;
+  }
+
+  .node-panel .section-title {
+    font-size: 0.9rem;
+  }
+
+  .node-detail-list li {
+    font-size: 0.72rem;
   }
 
   .import-panel {

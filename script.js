@@ -4,14 +4,10 @@ const subscriptionUrl = copyButton?.dataset.subscriptionUrl;
 const statusDot = document.getElementById('server-status-dot');
 const statusText = document.getElementById('server-status-text');
 const serverNodes = document.getElementById('server-nodes');
+const serverNodeList = document.getElementById('server-node-list');
 const requestTimeoutMs = 10000;
 const subscriptionName = 'VLESS 5G TikTok';
-const fallbackNodeNames = [
-  'Named Tunnel 1 TLS',
-  'Named Tunnel 1 NO TLS',
-  'Named Tunnel 2 TLS',
-  'Named Tunnel 2 NO TLS',
-];
+const subscriptionDataUrl = '/subscription-source';
 
 let isCheckingServer = false;
 
@@ -59,13 +55,36 @@ async function copySubscription() {
   }, 2000);
 }
 
-function renderNodeCount(nodeNames) {
+function renderNodes(nodeNames) {
   if (!serverNodes) return;
 
   const names = nodeNames.filter(Boolean);
   serverNodes.textContent = `${names.length} node`;
   serverNodes.title = names.join(' • ');
   serverNodes.setAttribute('aria-label', `${names.length} node: ${names.join(', ')}`);
+
+  if (!serverNodeList) return;
+
+  const nodeItems = names.map((name) => {
+    const item = document.createElement('li');
+    item.textContent = name;
+    return item;
+  });
+
+  serverNodeList.replaceChildren(...nodeItems);
+  serverNodeList.setAttribute('aria-label', `${names.length} node hiện có`);
+}
+
+function renderNodeLoadError() {
+  if (serverNodes) {
+    serverNodes.textContent = 'Không tải được';
+    serverNodes.removeAttribute('title');
+  }
+
+  if (serverNodeList) {
+    serverNodeList.replaceChildren();
+    serverNodeList.removeAttribute('aria-label');
+  }
 }
 
 function decodeSubscription(text) {
@@ -98,7 +117,7 @@ async function loadSubscriptionNodes() {
   if (!subscriptionUrl) return;
 
   try {
-    const response = await fetch(subscriptionUrl, {
+    const response = await fetch(subscriptionDataUrl, {
       cache: 'no-store',
       credentials: 'omit',
     });
@@ -110,11 +129,11 @@ async function loadSubscriptionNodes() {
       .map((link) => link.trim())
       .filter((link) => /^(vless|vmess|trojan|ss|hysteria2?|tuic):\/\//i.test(link));
 
-    if (links.length) {
-      renderNodeCount(links.map(getNodeName));
-    }
+    if (!links.length) throw new Error('Subscription has no supported nodes');
+
+    renderNodes(links.map(getNodeName));
   } catch (error) {
-    // Cross-origin subscriptions can block content reads; the current fallback stays visible.
+    renderNodeLoadError();
   }
 }
 
@@ -197,7 +216,6 @@ if (copyButton && subscriptionUrl) {
   copyButton.addEventListener('click', copySubscription);
 }
 
-renderNodeCount(fallbackNodeNames);
 hydrateClientLinks();
 pingSubscriptionUrl();
 loadSubscriptionNodes();

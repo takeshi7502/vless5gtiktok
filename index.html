@@ -37,16 +37,17 @@
         </div>
       </div>
 
-      <dl class="server-info" aria-label="Thông tin server VLESS">
-        <div class="server-info-item">
-          <dt>Vị trí server</dt>
-          <dd>Cloudflare Anycast (Japan)</dd>
-        </div>
-        <div class="server-info-item">
-          <dt>Node hiện có</dt>
-          <dd id="server-nodes" class="node-list">Đang tải danh sách node...</dd>
-        </div>
-      </dl>
+      <section class="node-panel collapsible-panel" aria-label="Danh sách node hiện có">
+        <details>
+          <summary>
+            <span class="section-title">Node hiện có</span>
+            <span class="summary-hint"><span id="server-nodes" class="node-list">Đang tải...</span></span>
+          </summary>
+          <div class="collapsible-content node-details-content">
+            <ul id="server-node-list" class="node-detail-list" aria-live="polite"></ul>
+          </div>
+        </details>
+      </section>
 
       <section class="import-panel" aria-labelledby="import-title">
         <div class="import-panel-heading">

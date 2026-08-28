@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/subscription-source",
+      "destination": "https://vless5gtiktok.takeshi.dev/frp_info.config"
+    }
+  ]
+}
