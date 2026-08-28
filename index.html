@@ -81,12 +81,114 @@
     </section>
 
     <section class="guide-section" aria-label="Nội dung hướng dẫn">
-      <article class="guide-panel pixel-panel guide-panel-wide">
+      <article id="server-setup" class="guide-panel pixel-panel guide-panel-wide collapsible-panel setup-guide" data-guide-order="4">
+        <details>
+          <summary>
+            <span class="setup-summary-title">
+              <span class="section-title">Hướng dẫn tự host server riêng <span>VLESS-WS</span></span>
+              <span class="setup-summary-copy">VPS Ubuntu hoặc Termux for Android</span>
+            </span>
+            <span class="setup-cta">MỞ SETUP <span aria-hidden="true">+</span></span>
+          </summary>
+          <div class="collapsible-content setup-content">
+            <p class="setup-intro">Chạy một lệnh để script tự cài git khi cần, clone hoặc cập nhật source trong <code>~/vless</code>, rồi mở menu setup.</p>
+
+            <div class="install-command-grid">
+              <section class="install-command">
+                <p class="panel-kicker">VPS / Ubuntu</p>
+                <div class="command-copy-row">
+                  <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/takeshi7502/xray_vless_ws_server/main/install.sh)</code>
+                  <button class="command-copy-button" type="button" data-copy-command="bash &lt;(curl -fsSL https://raw.githubusercontent.com/takeshi7502/xray_vless_ws_server/main/install.sh)"><span data-command-copy-label>COPY</span></button>
+                </div>
+              </section>
+
+              <section class="install-command">
+                <p class="panel-kicker">Termux for Android</p>
+                <div class="command-copy-row">
+                  <code>pkg install curl -y &amp;&amp; bash &lt;(curl -fsSL https://raw.githubusercontent.com/takeshi7502/xray_vless_ws_server/main/install.sh)</code>
+                  <button class="command-copy-button" type="button" data-copy-command="pkg install curl -y &amp;&amp; bash &lt;(curl -fsSL https://raw.githubusercontent.com/takeshi7502/xray_vless_ws_server/main/install.sh)"><span data-command-copy-label>COPY</span></button>
+                </div>
+              </section>
+            </div>
+
+            <h3>Chọn cơ bản trong menu</h3>
+            <div class="setup-mode-grid" role="tablist" aria-label="Chọn chế độ cài đặt server">
+              <button id="setup-mode-quick" class="setup-mode setup-mode-recommended is-selected" type="button" role="tab" aria-selected="true" aria-controls="setup-guide-quick" data-setup-mode="quick">
+                <span class="setup-mode-number">1</span>
+                <span>
+                  <strong>Quick Tunnel</strong>
+                  <span class="setup-mode-description">Không cần domain, phù hợp để thử nhanh. Hostname <code>trycloudflare.com</code> sẽ đổi khi khởi động lại.</span>
+                </span>
+              </button>
+              <button id="setup-mode-named" class="setup-mode" type="button" role="tab" aria-selected="false" aria-controls="setup-guide-named" tabindex="-1" data-setup-mode="named">
+                <span class="setup-mode-number">2</span>
+                <span>
+                  <strong>Named Tunnel</strong>
+                  <span class="setup-mode-description">Domain cố định; cần Cloudflare Zero Trust và tunnel token.</span>
+                </span>
+              </button>
+              <button id="setup-mode-direct" class="setup-mode" type="button" role="tab" aria-selected="false" aria-controls="setup-guide-direct" tabindex="-1" data-setup-mode="direct">
+                <span class="setup-mode-number">3</span>
+                <span>
+                  <strong>Direct DNS</strong>
+                  <span class="setup-mode-description">Domain cố định qua Cloudflare DNS proxy; cần origin ở cổng 80.</span>
+                </span>
+              </button>
+            </div>
+
+            <section id="setup-guide-quick" class="setup-mode-guide" role="tabpanel" aria-labelledby="setup-mode-quick" data-setup-guide="quick">
+              <div class="setup-guide-heading">
+                <h4>1 - Quick Tunnel</h4>
+                <p>Thử nhanh, không cần mua hay cấu hình domain.</p>
+              </div>
+              <ol class="setup-steps">
+                <li>Trong menu script, chọn <strong>1 - Quick Tunnel</strong>. Cloudflare sẽ cấp hostname <code>trycloudflare.com</code> tạm thời.</li>
+                <li>Ở UUID, nhấn <code>Enter</code> để script tự sinh. Chọn Fake SNI: <code>1</code> cho Free TikTok, <code>2</code> cho Free Vina Ko Nen, hoặc <code>3</code> cho cả hai.</li>
+                <li>Giữ path mặc định <code>/tiktok4g</code> hoặc tự đặt; sau đó chọn link cổng <code>80</code>, <code>443</code> hoặc cả hai và nhập mã quốc gia nếu cần.</li>
+                <li>Linux sẽ tạo service <code>xray-vless</code> và in link trong <code>frp_info.config</code>. Trên Termux, tiến trình chạy trực tiếp; nhấn <code>Ctrl+C</code> để dừng.</li>
+              </ol>
+              <p class="setup-guide-callout"><strong>Lưu ý:</strong> hostname Quick Tunnel thay đổi sau mỗi lần khởi động lại, vì vậy link đăng ký cũ có thể không còn dùng được.</p>
+            </section>
+
+            <section id="setup-guide-named" class="setup-mode-guide" role="tabpanel" aria-labelledby="setup-mode-named" data-setup-guide="named" hidden>
+              <div class="setup-guide-heading">
+                <h4>2 - Named Tunnel</h4>
+                <p>Dùng domain cố định thông qua Cloudflare Zero Trust.</p>
+              </div>
+              <ol class="setup-steps">
+                <li>Trong Cloudflare Zero Trust, vào <strong>Networks → Tunnels</strong>, tạo tunnel loại <strong>Cloudflared</strong> rồi sao chép connector token.</li>
+                <li>Thêm <strong>Public Hostname</strong> cho domain muốn dùng, đặt service là <code>http://127.0.0.1:8888</code>.</li>
+                <li>Chọn <strong>2 - Named Tunnel</strong> trong script, nhập domain và token. Tiếp tục chọn Fake SNI, path, cổng link và mã quốc gia như nhu cầu.</li>
+                <li>Script chạy cloudflared kết nối ra ngoài, nên không cần tạo bản ghi A/AAAA trỏ về VPS hoặc mở cổng Xray public cho mode này.</li>
+              </ol>
+              <p class="setup-guide-callout"><strong>Phù hợp khi:</strong> cần một hostname ổn định để chia sẻ subscription mà không phải cập nhật lại sau mỗi lần restart.</p>
+            </section>
+
+            <section id="setup-guide-direct" class="setup-mode-guide" role="tabpanel" aria-labelledby="setup-mode-direct" data-setup-guide="direct" hidden>
+              <div class="setup-guide-heading">
+                <h4>3 - Direct Cloudflare DNS</h4>
+                <p>Dùng Cloudflare DNS proxy trực tiếp đến VPS.</p>
+              </div>
+              <ol class="setup-steps">
+                <li>Trong DNS của Cloudflare, tạo bản ghi <strong>A</strong> cho domain hoặc subdomain trỏ tới IP VPS và bật biểu tượng mây cam <strong>Proxied</strong>.</li>
+                <li>Ở <strong>SSL/TLS</strong>, chọn chế độ <strong>Flexible</strong> theo cấu hình mặc định của script.</li>
+                <li>Chọn <strong>3 - Direct DNS</strong>, nhập domain. Origin mặc định là <code>0.0.0.0:80</code>; tiếp tục chọn Fake SNI, path, cổng link và mã quốc gia.</li>
+                <li>Chỉ mở TCP <code>80</code> khi cần và nên giới hạn inbound theo dải IP Cloudflare. Kiểm tra lại DNS đã proxy trước khi import link.</li>
+              </ol>
+              <p class="setup-guide-callout"><strong>Lưu ý bảo mật:</strong> với Flexible, đoạn Cloudflare đến VPS không mã hóa TLS. Chỉ dùng trên hạ tầng bạn quản trị và cân nhắc cấu hình TLS origin phù hợp khi cần.</p>
+            </section>
+
+            <p class="setup-note">Đây là proof-of-concept phục vụ mục đích học tập. Không có bảo đảm về zero-rating, dung lượng miễn phí hoặc khả năng vượt giới hạn của nhà mạng.</p>
+          </div>
+        </details>
+      </article>
+
+      <article id="operating-principle" class="guide-panel pixel-panel guide-panel-wide" data-guide-order="1">
         <h2 class="section-title">Nguyên lý hoạt động <span>(Bẻ băng thông)</span></h2>
         <p><strong>Giải thích đơn giản nhất:</strong> Khi bạn đăng ký gói TikTok, nhà mạng sẽ mở đường truyền “thả ga” cho riêng ứng dụng này. Máy chủ VLESS đóng vai trò như một <strong>“vỏ bọc ngụy trang”</strong>. Khi bạn vào Facebook, YouTube hoặc lướt web, phần mềm VPN trên máy sẽ gom toàn bộ dữ liệu lại, “dán nhãn” giả bên ngoài là lưu lượng xem TikTok rồi gửi đi. Nhà mạng kiểm tra thấy nhãn TikTok nên cho đi qua miễn phí. Khi gói dữ liệu đến máy chủ VLESS, máy chủ sẽ bóc lớp vỏ ngụy trang này ra và giúp bạn kết nối tới trang web đích mong muốn.</p>
       </article>
 
-      <article class="guide-panel pixel-panel guide-panel-wide collapsible-panel">
+      <article id="price-comparison" class="guide-panel pixel-panel guide-panel-wide collapsible-panel" data-guide-order="3">
         <details>
           <summary>
             <span class="section-title">So sánh kinh tế</span>
@@ -126,7 +228,7 @@
         </details>
       </article>
 
-      <article class="guide-panel pixel-panel guide-panel-wide collapsible-panel">
+      <article id="tiktok-registration" class="guide-panel pixel-panel guide-panel-wide collapsible-panel" data-guide-order="2">
         <details>
           <summary>
             <span class="section-title">Đăng ký gói TikTok</span>
@@ -159,7 +261,7 @@
         </details>
       </article>
 
-      <article class="guide-panel pixel-panel">
+      <article id="android-no-root" class="guide-panel pixel-panel">
         <h2 class="section-title">Android <span>Không Root</span></h2>
         <h3>v2RayTun</h3>
         <ul>
@@ -169,7 +271,7 @@
         </ul>
       </article>
 
-      <article class="guide-panel pixel-panel">
+      <article id="android-root" class="guide-panel pixel-panel">
         <h2 class="section-title">Android <span>Đã Root</span></h2>
         <h3>Magic V2Ray Module</h3>
         <p><em>Magic V2Ray là công cụ mạng dành cho Android đã root, tạo kết nối xuyên suốt toàn hệ thống và bao phủ các ứng dụng trên thiết bị.</em></p>
@@ -187,6 +289,13 @@
       <div>Thanks HuskyDG</div>
     </footer>
   </main>
+
+  <label class="language-switcher">
+    <select id="language-select" aria-label="Chọn ngôn ngữ">
+      <option value="vi" selected>Tiếng Việt</option>
+      <option value="en">English</option>
+    </select>
+  </label>
 
   <a class="telegram-float" href="https://t.me/vless4gtiktok" target="_blank" rel="noopener" aria-label="Tham gia nhóm Telegram VLESS 4G TikTok">
     <span class="telegram-float-label">Nhóm Telegram</span>

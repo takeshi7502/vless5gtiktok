@@ -1,6 +1,10 @@
 const copyButton = document.getElementById('copy-subscription');
 const copyLabel = copyButton?.querySelector('[data-copy-label]');
 const subscriptionUrl = copyButton?.dataset.subscriptionUrl;
+const languageSelect = document.getElementById('language-select');
+const commandCopyButtons = document.querySelectorAll('[data-copy-command]');
+const setupModeButtons = document.querySelectorAll('[data-setup-mode]');
+const setupModeGuides = document.querySelectorAll('[data-setup-guide]');
 const statusDot = document.getElementById('server-status-dot');
 const statusText = document.getElementById('server-status-text');
 const serverNodes = document.getElementById('server-nodes');
@@ -9,8 +13,192 @@ const nodePanel = document.querySelector('.node-panel');
 const requestTimeoutMs = 10000;
 const subscriptionName = 'VLESS 5G TikTok';
 const subscriptionDataUrl = '/subscription-source';
+const defaultDocumentTitle = document.title;
+const descriptionMeta = document.querySelector('meta[name="description"]');
+const defaultDescription = descriptionMeta?.content;
+
+const localizedElements = [
+  { selector: '.hero-image', attribute: 'aria-label', en: 'Pixel-art night scene with a glowing gateway and chibi character' },
+  { selector: '#language-select', attribute: 'aria-label', en: 'Select language' },
+  { selector: '#page-title', en: 'FREE VLESS SERVER' },
+  { selector: '.hero-description', en: '4G/5G data for TikTok' },
+  { selector: '.connection-panel .panel-kicker', en: 'SUBSCRIPTION LINK (VLESS-WS)' },
+  { selector: '#connection-title', en: 'Connection gateway' },
+  { selector: '.node-panel', attribute: 'aria-label', en: 'Available node list' },
+  { selector: '.node-panel .section-title', en: 'Available nodes' },
+  { selector: '#import-title', en: 'Import subscription' },
+  { selector: '.client-picker', attribute: 'aria-label', en: 'Clients that support subscription import' },
+  { selector: '.client-picker-header .panel-kicker', en: 'IMPORT INTO ANDROID APP' },
+  { selector: '.guide-section', attribute: 'aria-label', en: 'Guides' },
+  { selector: '#server-setup > details > summary .section-title', en: 'Self-host a private server <span>VLESS-WS</span>' },
+  { selector: '#server-setup .setup-summary-copy', en: 'VPS Ubuntu or Termux for Android' },
+  { selector: '#server-setup .setup-cta', en: 'OPEN SETUP <span aria-hidden="true">+</span>' },
+  { selector: '#server-setup .setup-intro', en: 'Run one command to install git when needed, clone or update the source in <code>~/vless</code>, then open the setup menu.' },
+  { selector: '#server-setup .setup-content > h3', en: 'Choose a menu mode' },
+  { selector: '#server-setup .setup-mode-grid', attribute: 'aria-label', en: 'Choose a server setup mode' },
+  { selector: '#setup-mode-quick .setup-mode-description', en: 'No domain needed, suitable for a quick test. The <code>trycloudflare.com</code> hostname changes after a restart.' },
+  { selector: '#setup-mode-named .setup-mode-description', en: 'Fixed domain; requires Cloudflare Zero Trust and a tunnel token.' },
+  { selector: '#setup-mode-direct .setup-mode-description', en: 'Fixed domain through Cloudflare DNS proxy; requires an origin on port 80.' },
+  { selector: '#setup-guide-quick .setup-guide-heading p', en: 'Quick trial without buying or configuring a domain.' },
+  { selector: '#setup-guide-quick .setup-steps li', en: [
+    'In the script menu, choose <strong>1 - Quick Tunnel</strong>. Cloudflare provides a temporary <code>trycloudflare.com</code> hostname.',
+    'At UUID, press <code>Enter</code> to let the script generate one. Choose Fake SNI: <code>1</code> for Free TikTok, <code>2</code> for Free Vina Ko Nen, or <code>3</code> for both.',
+    'Keep the default <code>/tiktok4g</code> path or set your own. Then choose link port <code>80</code>, <code>443</code>, or both, and enter a country code when needed.',
+    'Linux creates the <code>xray-vless</code> service and prints links in <code>frp_info.config</code>. On Termux, it runs in the foreground; press <code>Ctrl+C</code> to stop it.',
+  ] },
+  { selector: '#setup-guide-quick .setup-guide-callout', en: '<strong>Note:</strong> the Quick Tunnel hostname changes after every restart, so an old subscription link can stop working.' },
+  { selector: '#setup-guide-named .setup-guide-heading p', en: 'Use a fixed domain through Cloudflare Zero Trust.' },
+  { selector: '#setup-guide-named .setup-steps li', en: [
+    'In Cloudflare Zero Trust, open <strong>Networks -> Tunnels</strong>, create a <strong>Cloudflared</strong> tunnel, then copy its connector token.',
+    'Add a <strong>Public Hostname</strong> for the domain and set its service to <code>http://127.0.0.1:8888</code>.',
+    'Choose <strong>2 - Named Tunnel</strong> in the script, enter the domain and token, then choose Fake SNI, path, link ports, and country code as needed.',
+    'The script runs cloudflared outbound, so this mode does not require an A/AAAA record pointing to the VPS or a public Xray port.',
+  ] },
+  { selector: '#setup-guide-named .setup-guide-callout', en: '<strong>Best for:</strong> a stable hostname for sharing subscriptions without updating it after each restart.' },
+  { selector: '#setup-guide-direct .setup-guide-heading p', en: 'Use a Cloudflare DNS proxy directly to the VPS.' },
+  { selector: '#setup-guide-direct .setup-steps li', en: [
+    'In Cloudflare DNS, create an <strong>A</strong> record for the domain or subdomain pointing to the VPS IP, and turn on the orange-cloud <strong>Proxied</strong> setting.',
+    'In <strong>SSL/TLS</strong>, choose <strong>Flexible</strong> for the script default configuration.',
+    'Choose <strong>3 - Direct DNS</strong>, enter the domain, and keep the default origin <code>0.0.0.0:80</code> or change it. Then select Fake SNI, path, link ports, and country code.',
+    'Open TCP <code>80</code> only when needed and restrict inbound traffic to Cloudflare IP ranges where possible. Confirm that DNS is proxied before importing the link.',
+  ] },
+  { selector: '#setup-guide-direct .setup-guide-callout', en: '<strong>Security note:</strong> with Flexible, the Cloudflare-to-VPS leg has no TLS encryption. Use it only on infrastructure you manage and configure origin TLS when needed.' },
+  { selector: '#server-setup .setup-note', en: 'This proof of concept is for learning purposes. It does not guarantee zero-rating, free data, or the ability to bypass carrier limits.' },
+  { selector: '#operating-principle .section-title', en: 'How it works <span>(Bandwidth bypass)</span>' },
+  { selector: '#operating-principle p', en: '<strong>In simple terms:</strong> When a TikTok plan allows traffic for that app, the server is presented as TikTok traffic. The VPN client wraps your traffic before sending it to the VLESS server, which then connects to the requested destination.' },
+  { selector: '#price-comparison .section-title', en: 'Price comparison' },
+  { selector: '#price-comparison .summary-hint', en: 'OPEN TABLE' },
+  { selector: '#price-comparison .collapsible-content > p', en: 'Conventional data plans often have strict caps and higher costs than TikTok-based options. Plan information is for reference only and can vary by subscriber.' },
+  { selector: '#price-comparison .table-container', attribute: 'aria-label', en: 'Carrier plan comparison table' },
+  { selector: '#price-comparison thead th', en: [
+    'Carrier',
+    'Regular 5G plan<br />(price and limit)',
+    'TikTok-based plan<br />(price and data)',
+  ] },
+  { selector: '#price-comparison tbody td:nth-child(2)', en: [
+    'Day: ST5K (5k/day, 500MB-1GB)<br />Month: 3MXH100 (160k/month, 1GB/day)<br />Year: 12SD125 (1,500k/year, 5GB/day)',
+    'Day: D5 (5k/day, 1GB)<br />Month: BIG90 (90k/month, 7GB high speed then disconnected)',
+    'Day: D10 (10k/day, 8GB high speed)<br />Month: HD packages such as 6HD90, about 75k/month for 7GB',
+  ] },
+  { selector: '#price-comparison tbody td:nth-child(3)', en: [
+    '<strong>T50K</strong> (50k -> 50GB/month)<br /><strong>T15KN</strong> (60k -> 100GB/month)<br /><strong>T5K</strong> (150k -> 450GB/month)<br /><strong>MXH100</strong> (100k -> unlimited)',
+    '<strong>TK30</strong> (30k/month -> unlimited TikTok data)',
+    '<strong>TT1</strong> (3k/day -> unlimited)<br /><strong>DK TIK30</strong> (50k -> 50GB/month)<br /><strong>DK TT80</strong> (80k -> unlimited)',
+  ] },
+  { selector: '#tiktok-registration .section-title', en: 'Subscribe to a TikTok plan' },
+  { selector: '#tiktok-registration .summary-hint', en: 'OPEN GUIDE' },
+  { selector: '#tiktok-registration .collapsible-content > p', en: 'To use 5G through the server, subscribe to the TikTok plan that matches your mobile carrier.' },
+  { selector: '#tiktok-registration li', en: [
+    'Under 50GB/month: text <span class="highlight">T50K</span> to <span class="highlight">191</span> (50k -> 50GB/month).',
+    'Under 100GB/month: text <span class="highlight">T15KN</span> to <span class="highlight">191</span> (15k/week -> 25GB/week; 60k/month for 100GB).',
+    'Over 100GB/month: text <span class="highlight">T5K</span> to <span class="highlight">191</span> (5k/day -> 15GB/day; 150k/month for 450GB).',
+    'Unlimited plan: text <span class="highlight">MXH100</span> to <span class="highlight">191</span> (100k/month -> unlimited TikTok data; availability depends on the subscriber).',
+    'Text <span class="highlight">TK30</span> to <span class="highlight">888</span> -> 30k/month for unlimited TikTok data.',
+    '<em>Keeping the SIM balance at 0 VND can avoid extra charges:</em> Data 4G/5G -> Data cards -> VinaPhone -> choose the 1.5k/50MB/30-day plan -> Buy now -> Top up.',
+    'Text <span class="highlight">DK TIK30</span> to <span class="highlight">9199</span> -> 50k/50GB/month.',
+    'Text <span class="highlight">TT1</span> to <span class="highlight">9199</span> -> 3k/day, unlimited TikTok data.',
+    'Text <span class="highlight">DK TT80</span> to <span class="highlight">9199</span> -> 80k/month, unlimited TikTok data.',
+  ] },
+  { selector: '#android-no-root .section-title', en: 'Android <span>No Root</span>' },
+  { selector: '#android-no-root li', en: [
+    'Install <a href="https://play.google.com/store/apps/details?id=com.v2raytun.android" target="_blank" rel="noopener">v2RayTun from Google Play</a>.',
+    'Choose <strong>COPY URL</strong> above.',
+    'In v2RayTun, import the configuration from the clipboard and select a node to connect.',
+  ] },
+  { selector: '#android-root .section-title', en: 'Android <span>Rooted</span>' },
+  { selector: '#android-root p', en: '<em>Magic V2Ray is a networking tool for rooted Android devices. It creates a system-wide connection that covers applications on the device.</em>' },
+  { selector: '#android-root li', en: [
+    'Download the latest <strong>.zip</strong> release from <a href="https://magicv2ray.duckdns.org/" target="_blank" rel="noopener">Magic V2Ray</a>.',
+    'Flash the module through Magisk or KernelSU Manager, then restart the device.',
+    'Open the local Web UI with the <strong>Action</strong> button in Magisk or KernelSU.',
+    'Enter the <strong>Subscription Link</strong>, then choose <strong>Process Connect Link</strong> to load the configuration list.',
+  ] },
+  { selector: '.footer > div:first-child', en: 'VLESS 5G TikTok <span aria-hidden="true">&bull;</span> Free Gateway <span aria-hidden="true">&bull;</span> Updated by <a href="https://takeshi.dev/" target="_blank" rel="noopener">Takeshi.dev</a>' },
+  { selector: '.telegram-float', attribute: 'aria-label', en: 'Join the VLESS 4G TikTok Telegram group' },
+  { selector: '.telegram-float-label', en: 'Telegram group' },
+];
+
+const localizedText = {
+  vi: {
+    copySuccess: 'ĐÃ COPY',
+    copyRetry: 'THỬ LẠI',
+    nodesLoading: 'Đang tải...',
+    nodeLoadError: 'Không tải được',
+    nodeCount: (count) => `${count} node`,
+    nodeSummary: (count, names) => `${count} node: ${names.join(', ')}`,
+    nodeList: (count) => `${count} node hiện có`,
+    statusChecking: 'Đang ping link đăng ký...',
+    statusOnline: 'Máy chủ đang trực tuyến',
+    statusOffline: 'Không kết nối được tới máy chủ',
+  },
+  en: {
+    copySuccess: 'COPIED',
+    copyRetry: 'RETRY',
+    nodesLoading: 'Loading...',
+    nodeLoadError: 'Unable to load',
+    nodeCount: (count) => `${count} node${count === 1 ? '' : 's'}`,
+    nodeSummary: (count, names) => `${count} node${count === 1 ? '' : 's'}: ${names.join(', ')}`,
+    nodeList: (count) => `${count} available node${count === 1 ? '' : 's'}`,
+    statusChecking: 'Checking subscription link...',
+    statusOnline: 'Server is online',
+    statusOffline: 'Cannot reach the server',
+  },
+};
 
 let isCheckingServer = false;
+let currentLanguage = languageSelect?.value === 'en' ? 'en' : 'vi';
+let currentServerStatus = 'checking';
+let currentNodeState = 'loading';
+let currentNodeNames = [];
+const vietnameseContent = new WeakMap();
+
+function translate(key, ...args) {
+  const value = localizedText[currentLanguage][key];
+  return typeof value === 'function' ? value(...args) : value;
+}
+
+function applyStaticTranslations() {
+  localizedElements.forEach(({ selector, attribute, en }) => {
+    document.querySelectorAll(selector).forEach((element, index) => {
+      if (!vietnameseContent.has(element)) {
+        vietnameseContent.set(element, attribute ? element.getAttribute(attribute) : element.innerHTML);
+      }
+
+      const translatedValue = Array.isArray(en) ? en[index] : en;
+      if (translatedValue == null) return;
+
+      if (attribute) {
+        element.setAttribute(attribute, currentLanguage === 'en' ? translatedValue : vietnameseContent.get(element));
+      } else {
+        element.innerHTML = currentLanguage === 'en' ? translatedValue : vietnameseContent.get(element);
+      }
+    });
+  });
+}
+
+function updateClientAriaLabels() {
+  document.querySelectorAll('[data-client]').forEach((client) => {
+    const clientName = client.querySelector('span')?.textContent || 'client';
+    client.setAttribute('aria-label', currentLanguage === 'en' ? `Import into ${clientName}` : `Nhập vào ${clientName}`);
+  });
+}
+
+function applyLanguage(language) {
+  currentLanguage = language === 'en' ? 'en' : 'vi';
+  document.documentElement.lang = currentLanguage;
+  document.title = currentLanguage === 'en' ? 'VLESS 5G TikTok | Gateway' : defaultDocumentTitle;
+
+  if (descriptionMeta) {
+    descriptionMeta.content = currentLanguage === 'en'
+      ? 'VLESS trial server information for TikTok-based 4G/5G data, infrastructure status, and Android configuration guides.'
+      : defaultDescription;
+  }
+
+  applyStaticTranslations();
+  updateClientAriaLabels();
+  updateNodePresentation();
+  setStatus(currentServerStatus);
+}
 
 async function copyText(text) {
   if (navigator.clipboard?.writeText && window.isSecureContext) {
@@ -46,7 +234,7 @@ async function copySubscription() {
   const defaultLabel = 'COPY URL';
 
   if (copyLabel) {
-    copyLabel.textContent = didCopy ? 'ĐÃ COPY' : 'THỬ LẠI';
+    copyLabel.textContent = didCopy ? translate('copySuccess') : translate('copyRetry');
   }
   copyButton.classList.toggle('copied', didCopy);
 
@@ -56,36 +244,103 @@ async function copySubscription() {
   }, 2000);
 }
 
-function renderNodes(nodeNames) {
+async function copySetupCommand(button) {
+  const command = button.dataset.copyCommand;
+  const label = button.querySelector('[data-command-copy-label]');
+
+  if (!command) return;
+
+  const didCopy = await copyText(command);
+  if (label) label.textContent = didCopy ? 'COPIED' : 'RETRY';
+  button.classList.toggle('copied', didCopy);
+
+  window.setTimeout(() => {
+    if (label) label.textContent = 'COPY';
+    button.classList.remove('copied');
+  }, 2000);
+}
+
+function selectSetupMode(mode) {
+  setupModeButtons.forEach((button) => {
+    const isSelected = button.dataset.setupMode === mode;
+    button.classList.toggle('is-selected', isSelected);
+    button.setAttribute('aria-selected', String(isSelected));
+    button.tabIndex = isSelected ? 0 : -1;
+  });
+
+  setupModeGuides.forEach((guide) => {
+    guide.hidden = guide.dataset.setupGuide !== mode;
+  });
+}
+
+function setupModeNavigation() {
+  setupModeButtons.forEach((button, index) => {
+    button.addEventListener('click', () => selectSetupMode(button.dataset.setupMode));
+
+    button.addEventListener('keydown', (event) => {
+      const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? 1
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? -1
+          : 0;
+
+      if (!direction) return;
+
+      event.preventDefault();
+      const nextIndex = (index + direction + setupModeButtons.length) % setupModeButtons.length;
+      const nextButton = setupModeButtons[nextIndex];
+      selectSetupMode(nextButton.dataset.setupMode);
+      nextButton.focus();
+    });
+  });
+}
+
+function updateNodePresentation() {
   if (!serverNodes) return;
 
-  const names = nodeNames.filter(Boolean);
-  serverNodes.textContent = `${names.length} node`;
-  serverNodes.title = names.join(' • ');
-  serverNodes.setAttribute('aria-label', `${names.length} node: ${names.join(', ')}`);
+  if (currentNodeState === 'loading') {
+    serverNodes.textContent = translate('nodesLoading');
+    serverNodes.removeAttribute('title');
+    serverNodes.removeAttribute('aria-label');
+  } else if (currentNodeState === 'error') {
+    serverNodes.textContent = translate('nodeLoadError');
+    serverNodes.removeAttribute('title');
+    serverNodes.removeAttribute('aria-label');
+  } else {
+    const names = currentNodeNames;
+    serverNodes.textContent = translate('nodeCount', names.length);
+    serverNodes.title = names.join(' • ');
+    serverNodes.setAttribute('aria-label', translate('nodeSummary', names.length, names));
+  }
 
   if (!serverNodeList) return;
 
-  const nodeItems = names.map((name) => {
+  if (currentNodeState !== 'ready') {
+    serverNodeList.replaceChildren();
+    serverNodeList.removeAttribute('aria-label');
+    return;
+  }
+
+  const nodeItems = currentNodeNames.map((name) => {
     const item = document.createElement('li');
     item.textContent = name;
     return item;
   });
 
   serverNodeList.replaceChildren(...nodeItems);
-  serverNodeList.setAttribute('aria-label', `${names.length} node hiện có`);
+  serverNodeList.setAttribute('aria-label', translate('nodeList', currentNodeNames.length));
+}
+
+function renderNodes(nodeNames) {
+  currentNodeNames = nodeNames.filter(Boolean);
+  currentNodeState = 'ready';
+  updateNodePresentation();
 }
 
 function renderNodeLoadError() {
-  if (serverNodes) {
-    serverNodes.textContent = 'Không tải được';
-    serverNodes.removeAttribute('title');
-  }
-
-  if (serverNodeList) {
-    serverNodeList.replaceChildren();
-    serverNodeList.removeAttribute('aria-label');
-  }
+  currentNodeNames = [];
+  currentNodeState = 'error';
+  updateNodePresentation();
 }
 
 function decodeSubscription(text) {
@@ -171,9 +426,10 @@ function hydrateClientLinks() {
   });
 }
 
-function setStatus(state, text) {
+function setStatus(state) {
   if (!statusDot || !statusText) return;
 
+  currentServerStatus = state;
   statusDot.classList.remove('checking', 'online', 'offline', 'pulse-dot');
   statusText.classList.remove('status-text-offline');
   statusDot.classList.add(state);
@@ -185,14 +441,14 @@ function setStatus(state, text) {
     statusText.classList.add('status-text-offline');
   }
 
-  statusText.textContent = text;
+  statusText.textContent = translate(`status${state.charAt(0).toUpperCase()}${state.slice(1)}`);
 }
 
 async function pingSubscriptionUrl() {
   if (!subscriptionUrl || isCheckingServer) return;
 
   isCheckingServer = true;
-  setStatus('checking', 'Đang ping link đăng ký...');
+  setStatus('checking');
 
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), requestTimeoutMs);
@@ -205,9 +461,9 @@ async function pingSubscriptionUrl() {
       mode: 'no-cors',
       signal: controller.signal,
     });
-    setStatus('online', 'Máy chủ đang trực tuyến');
+    setStatus('online');
   } catch (error) {
-    setStatus('offline', 'Không kết nối được tới máy chủ');
+    setStatus('offline');
   } finally {
     window.clearTimeout(timeout);
     isCheckingServer = false;
@@ -218,6 +474,14 @@ if (copyButton && subscriptionUrl) {
   copyButton.addEventListener('click', copySubscription);
 }
 
+commandCopyButtons.forEach((button) => {
+  button.addEventListener('click', () => copySetupCommand(button));
+});
+
+languageSelect?.addEventListener('change', () => applyLanguage(languageSelect.value));
+
+applyLanguage(currentLanguage);
+setupModeNavigation();
 hydrateClientLinks();
 pingSubscriptionUrl();
 loadSubscriptionNodes();
