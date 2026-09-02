@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/subscription-source",
-      "destination": "https://vless5gtiktok.takeshi.dev/frp_info.config"
+      "destination": "https://vpn.takeshi.dev:2096/sub/65907c14y6de02gu"
     }
   ]
 }
