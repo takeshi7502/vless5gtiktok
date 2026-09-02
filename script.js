@@ -399,6 +399,7 @@ function getClientImportLink(client, url) {
 
   switch (client) {
     case 'v2raytun':
+      return `v2raytun://import/${url}`;
     case 'v2rayng':
       return `v2rayng://install-config?url=${encodedUrl}`;
     case 'clash':
