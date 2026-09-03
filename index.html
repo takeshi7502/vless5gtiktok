@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#12101f" />
   <title>VLESS 5G TikTok | Gateway</title>
-  <meta name="description" content="Thông tin máy chủ thử nghiệm VLESS cho dữ liệu 4G/5G nền TikTok, trạng thái hạ tầng và hướng dẫn cấu hình Android." />
+  <meta name="description" content="Máy chủ thử nghiệm VLESS cho 4G/5G nền TikTok miễn phí." />
   <link rel="icon" type="image/jpeg" href="https://sf-static.upanhlaylink.com/img/image_2026070608e9764ab8c801c692150da94c52a4a4.jpg" />
   <link rel="apple-touch-icon" href="https://sf-static.upanhlaylink.com/img/image_20260706d251203081bd2fb50d8bad298b7cb2cf.jpg" />
   <link rel="stylesheet" href="./styles.css" />
@@ -16,13 +16,12 @@
 </head>
 <body>
   <main class="container">
-    <header class="hero" aria-labelledby="page-title">
-      <div class="hero-image" role="img" aria-label="Khung cảnh pixel-art ban đêm với cổng phát sáng và nhân vật chibi"></div>
-      <div class="hero-content">
+    <header class="site-header" aria-labelledby="page-title">
+      <div class="site-header-brand">
         <p class="eyebrow"><span class="pixel-spark" aria-hidden="true"></span> VLESS Gateway</p>
-        <h1 id="page-title" class="title">VLESS SERVER MIỄN PHÍ</h1>
-        <p class="hero-description">Data 4G/5G nền TikTok</p>
+        <h1 id="page-title" class="site-title">VLESS SERVER MIỄN PHÍ</h1>
       </div>
+      <p class="header-description">Data 4G/5G nền TikTok</p>
     </header>
 
     <section class="connection-panel pixel-panel" aria-labelledby="connection-title">
@@ -88,7 +87,13 @@
               <span class="section-title">Hướng dẫn tự host server riêng <span>VLESS-WS</span></span>
               <span class="setup-summary-copy">VPS Ubuntu hoặc Termux for Android</span>
             </span>
-            <span class="setup-cta">MỞ SETUP <span aria-hidden="true">+</span></span>
+            <span class="setup-summary-actions">
+              <a class="setup-github-link" href="https://github.com/takeshi7502/xray_vless_ws_server" target="_blank" rel="noopener" aria-label="Mở repository trên GitHub">
+                <img src="https://cdn.simpleicons.org/github/FFFFFF" alt="" />
+                <span>GITHUB</span>
+              </a>
+              <span class="setup-cta">MỞ SETUP <span aria-hidden="true">+</span></span>
+            </span>
           </summary>
           <div class="collapsible-content setup-content">
             <p class="setup-intro">Chạy một lệnh để script tự cài git khi cần, clone hoặc cập nhật source trong <code>~/vless</code>, rồi mở menu setup.</p>
@@ -189,7 +194,7 @@
       </article>
 
       <article id="price-comparison" class="guide-panel pixel-panel guide-panel-wide collapsible-panel" data-guide-order="3">
-        <details>
+        <details open>
           <summary>
             <span class="section-title">So sánh kinh tế</span>
             <span class="summary-hint">Mở bảng</span>
@@ -229,7 +234,7 @@
       </article>
 
       <article id="tiktok-registration" class="guide-panel pixel-panel guide-panel-wide collapsible-panel" data-guide-order="2">
-        <details>
+        <details open>
           <summary>
             <span class="section-title">Đăng ký gói TikTok</span>
             <span class="summary-hint">Mở hướng dẫn</span>
@@ -289,13 +294,6 @@
       <div>Thanks HuskyDG</div>
     </footer>
   </main>
-
-  <label class="language-switcher">
-    <select id="language-select" aria-label="Chọn ngôn ngữ">
-      <option value="vi" selected>Tiếng Việt</option>
-      <option value="en">English</option>
-    </select>
-  </label>
 
   <a class="telegram-float" href="https://t.me/vless4gtiktok" target="_blank" rel="noopener" aria-label="Tham gia nhóm Telegram VLESS 4G TikTok">
     <span class="telegram-float-label">Nhóm Telegram</span>

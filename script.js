@@ -1,10 +1,10 @@
 const copyButton = document.getElementById('copy-subscription');
 const copyLabel = copyButton?.querySelector('[data-copy-label]');
 const subscriptionUrl = copyButton?.dataset.subscriptionUrl;
-const languageSelect = document.getElementById('language-select');
 const commandCopyButtons = document.querySelectorAll('[data-copy-command]');
 const setupModeButtons = document.querySelectorAll('[data-setup-mode]');
 const setupModeGuides = document.querySelectorAll('[data-setup-guide]');
+const setupGithubLink = document.querySelector('.setup-github-link');
 const statusDot = document.getElementById('server-status-dot');
 const statusText = document.getElementById('server-status-text');
 const serverNodes = document.getElementById('server-nodes');
@@ -18,10 +18,8 @@ const descriptionMeta = document.querySelector('meta[name="description"]');
 const defaultDescription = descriptionMeta?.content;
 
 const localizedElements = [
-  { selector: '.hero-image', attribute: 'aria-label', en: 'Pixel-art night scene with a glowing gateway and chibi character' },
-  { selector: '#language-select', attribute: 'aria-label', en: 'Select language' },
   { selector: '#page-title', en: 'FREE VLESS SERVER' },
-  { selector: '.hero-description', en: '4G/5G data for TikTok' },
+  { selector: '.header-description', en: '4G/5G data for TikTok' },
   { selector: '.connection-panel .panel-kicker', en: 'SUBSCRIPTION LINK (VLESS-WS)' },
   { selector: '#connection-title', en: 'Connection gateway' },
   { selector: '.node-panel', attribute: 'aria-label', en: 'Available node list' },
@@ -146,7 +144,7 @@ const localizedText = {
 };
 
 let isCheckingServer = false;
-let currentLanguage = languageSelect?.value === 'en' ? 'en' : 'vi';
+let currentLanguage = 'vi';
 let currentServerStatus = 'checking';
 let currentNodeState = 'loading';
 let currentNodeNames = [];
@@ -479,7 +477,8 @@ commandCopyButtons.forEach((button) => {
   button.addEventListener('click', () => copySetupCommand(button));
 });
 
-languageSelect?.addEventListener('change', () => applyLanguage(languageSelect.value));
+setupGithubLink?.addEventListener('click', (event) => event.stopPropagation());
+setupGithubLink?.addEventListener('keydown', (event) => event.stopPropagation());
 
 applyLanguage(currentLanguage);
 setupModeNavigation();
