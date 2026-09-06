@@ -17,6 +17,7 @@ const nodePanel = document.querySelector('.node-panel');
 const requestTimeoutMs = 10000;
 const subscriptionName = 'VLESS 5G TikTok';
 const subscriptionDataUrl = '/subscription-source';
+const nodeMetadataUrl = './node-metadata.json';
 const defaultDocumentTitle = document.title;
 const descriptionMeta = document.querySelector('meta[name="description"]');
 const defaultDescription = descriptionMeta?.content;
@@ -153,6 +154,7 @@ let currentServerStatus = 'checking';
 let currentNodeState = 'loading';
 let currentNodeNames = [];
 let currentSubscriptionInfo = null;
+let currentNodeMetadata = new Map();
 const vietnameseContent = new WeakMap();
 const copyFeedbackTimers = new WeakMap();
 
@@ -303,20 +305,12 @@ function setupModeNavigation() {
   });
 }
 
-function formatDataSize(bytes) {
+function formatDataInGb(bytes) {
   if (!Number.isFinite(bytes) || bytes < 0) return '--';
 
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let value = bytes;
-  let unitIndex = 0;
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-
-  const precision = value >= 10 || unitIndex === 0 ? 0 : 1;
-  return `${value.toFixed(precision)} ${units[unitIndex]}`;
+  const value = bytes / (1024 ** 3);
+  const precision = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+  return `${value.toFixed(precision)} GB`;
 }
 
 function parseSubscriptionInfo(header) {
@@ -364,7 +358,7 @@ function updateNodeSubscriptionInfo() {
     nodeQuotaProgress.style.width = '0%';
   } else {
     const percentage = Math.min(100, Math.round((used / total) * 100));
-    nodeQuotaText.textContent = `Data: ${formatDataSize(used)} / ${formatDataSize(total)}`;
+    nodeQuotaText.textContent = `Data: ${formatDataInGb(used)} / ${formatDataInGb(total)}`;
     nodeQuotaProgress.style.width = `${percentage}%`;
   }
 
@@ -405,7 +399,7 @@ function updateNodePresentation() {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
     cell.className = 'node-empty';
-    cell.colSpan = 4;
+    cell.colSpan = 5;
     cell.textContent = translate(currentNodeState === 'loading' ? 'nodesLoading' : 'nodeLoadError');
     row.append(cell);
     serverNodeList.replaceChildren(row);
@@ -413,8 +407,13 @@ function updateNodePresentation() {
     return;
   }
 
-  const nodeItems = currentNodeNames.map((name) => {
+  const nodeItems = currentNodeNames.map((name, index) => {
     const row = document.createElement('tr');
+    const metadata = currentNodeMetadata.get(index + 1) ?? null;
+
+    const indexCell = document.createElement('td');
+    indexCell.className = 'node-index';
+    indexCell.textContent = String(index + 1);
     const nameCell = document.createElement('td');
     nameCell.className = 'node-name';
     nameCell.textContent = name;
@@ -426,6 +425,7 @@ function updateNodePresentation() {
     warpCheckbox.disabled = true;
     warpCheckbox.title = 'Chưa cập nhật trạng thái WARP';
     warpCheckbox.setAttribute('aria-label', `WARP chưa cập nhật cho ${name}`);
+    applyCapabilityMetadata(warpCheckbox, metadata?.warp, 'WARP', name);
     warpCell.append(warpCheckbox);
 
     const adblockCell = document.createElement('td');
@@ -435,18 +435,71 @@ function updateNodePresentation() {
     adblockCheckbox.disabled = true;
     adblockCheckbox.title = 'Chưa cập nhật trạng thái Adblock';
     adblockCheckbox.setAttribute('aria-label', `Adblock chưa cập nhật cho ${name}`);
+    applyCapabilityMetadata(adblockCheckbox, metadata?.adblock, 'Adblock', name);
     adblockCell.append(adblockCheckbox);
 
     const noteCell = document.createElement('td');
     noteCell.className = 'node-note';
     noteCell.textContent = '—';
 
-    row.append(nameCell, warpCell, adblockCell, noteCell);
+    noteCell.textContent = metadata?.note || noteCell.textContent;
+    row.append(indexCell, nameCell, warpCell, adblockCell, noteCell);
     return row;
   });
 
   serverNodeList.replaceChildren(...nodeItems);
   nodeTable?.setAttribute('aria-label', translate('nodeList', currentNodeNames.length));
+}
+
+function readCapability(value) {
+  if (value === 1 || value === '1' || value === true) return true;
+  if (value === 0 || value === '0' || value === false) return false;
+  return null;
+}
+
+function applyCapabilityMetadata(checkbox, value, label, nodeName) {
+  const capability = readCapability(value);
+  checkbox.checked = capability === true;
+  checkbox.indeterminate = capability == null;
+  checkbox.classList.toggle('is-unknown', capability == null);
+
+  if (capability == null) {
+    checkbox.title = `Chưa điền trạng thái ${label}`;
+    checkbox.setAttribute('aria-label', `${label} chưa điền cho ${nodeName}`);
+    return;
+  }
+
+  checkbox.title = `${label}: ${capability ? 'Bật' : 'Tắt'}`;
+  checkbox.setAttribute('aria-label', `${label} ${capability ? 'bật' : 'tắt'} cho ${nodeName}`);
+}
+
+function parseNodeMetadata(payload) {
+  if (!Array.isArray(payload?.servers)) return new Map();
+
+  return payload.servers.reduce((metadataBySst, server) => {
+    if (!server || typeof server !== 'object') return metadataBySst;
+
+    const sst = Number(server.sst);
+    if (!Number.isSafeInteger(sst) || sst < 1) return metadataBySst;
+
+    metadataBySst.set(sst, {
+      warp: readCapability(server.warp),
+      adblock: readCapability(server.adblock),
+      note: typeof server.note === 'string' ? server.note.trim() : '',
+    });
+    return metadataBySst;
+  }, new Map());
+}
+
+async function loadNodeMetadata() {
+  try {
+    const response = await fetch(nodeMetadataUrl, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Metadata request failed: ${response.status}`);
+
+    currentNodeMetadata = parseNodeMetadata(await response.json());
+  } catch (error) {
+    currentNodeMetadata = new Map();
+  }
 }
 
 function renderNodes(nodeNames, subscriptionInfo) {
@@ -607,6 +660,6 @@ applyLanguage(currentLanguage);
 setupModeNavigation();
 hydrateClientLinks();
 pingSubscriptionUrl();
-loadSubscriptionNodes();
+loadNodeMetadata().finally(loadSubscriptionNodes);
 window.setInterval(pingSubscriptionUrl, 60000);
 window.setInterval(loadSubscriptionNodes, 300000);
