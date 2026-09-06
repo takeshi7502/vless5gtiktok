@@ -422,7 +422,8 @@ function updateNodePresentation() {
     const warpCheckbox = document.createElement('input');
     warpCheckbox.className = 'node-capability';
     warpCheckbox.type = 'checkbox';
-    warpCheckbox.disabled = true;
+    warpCheckbox.tabIndex = -1;
+    warpCheckbox.setAttribute('aria-readonly', 'true');
     warpCheckbox.title = 'Chưa cập nhật trạng thái WARP';
     warpCheckbox.setAttribute('aria-label', `WARP chưa cập nhật cho ${name}`);
     applyCapabilityMetadata(warpCheckbox, metadata?.warp, 'WARP', name);
@@ -432,7 +433,8 @@ function updateNodePresentation() {
     const adblockCheckbox = document.createElement('input');
     adblockCheckbox.className = 'node-capability';
     adblockCheckbox.type = 'checkbox';
-    adblockCheckbox.disabled = true;
+    adblockCheckbox.tabIndex = -1;
+    adblockCheckbox.setAttribute('aria-readonly', 'true');
     adblockCheckbox.title = 'Chưa cập nhật trạng thái Adblock';
     adblockCheckbox.setAttribute('aria-label', `Adblock chưa cập nhật cho ${name}`);
     applyCapabilityMetadata(adblockCheckbox, metadata?.adblock, 'Adblock', name);

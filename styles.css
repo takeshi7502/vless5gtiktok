@@ -164,9 +164,8 @@ img { max-width: 100%; }
 .node-table .node-name { color: #d7e0dd; font-weight: 600; overflow-wrap: anywhere; }
 .node-table .node-note { color: #84908c; }
 .node-table .node-empty { padding: 18px 12px; border-right: 0; color: var(--muted); text-align: center; }
-.node-capability { width: 15px; height: 15px; margin: 0; accent-color: var(--mint); opacity: 1; vertical-align: middle; }
-.node-capability:disabled { cursor: not-allowed; }
-.node-capability.is-unknown { opacity: 0.4; }
+.node-capability { width: 18px; height: 18px; margin: 0; accent-color: #53e8ae; box-shadow: 0 0 0 1px #718b7f; cursor: default; opacity: 1; pointer-events: none; vertical-align: middle; }
+.node-capability.is-unknown { box-shadow: 0 0 0 1px #8b9d95; opacity: 0.75; }
 .import-panel { margin-top: 16px; }
 .import-panel-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .import-panel-heading > div { display: flex; align-items: baseline; gap: 10px; }
