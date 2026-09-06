@@ -164,8 +164,8 @@ img { max-width: 100%; }
 .node-table .node-name { color: #d7e0dd; font-weight: 600; overflow-wrap: anywhere; }
 .node-table .node-note { color: #84908c; }
 .node-table .node-empty { padding: 18px 12px; border-right: 0; color: var(--muted); text-align: center; }
-.node-capability { width: 18px; height: 18px; margin: 0; accent-color: #53e8ae; box-shadow: 0 0 0 1px #718b7f; cursor: default; opacity: 1; pointer-events: none; vertical-align: middle; }
-.node-capability.is-unknown { box-shadow: 0 0 0 1px #8b9d95; opacity: 0.75; }
+.node-capability { width: 18px; height: 18px; margin: 0; accent-color: #53e8ae; cursor: default; opacity: 1; pointer-events: none; vertical-align: middle; }
+.node-capability.is-unknown { opacity: 0.75; }
 .import-panel { margin-top: 16px; }
 .import-panel-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .import-panel-heading > div { display: flex; align-items: baseline; gap: 10px; }
@@ -474,10 +474,14 @@ td:nth-child(3) strong { color: #d6e7bb; }
   .panel-heading { flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
   .panel-heading h2 { font-size: 20px; }
   .status { max-width: 100%; min-height: 33px; padding: 6px 9px; font-size: 11px; }
-  .node-summary-status { gap: 8px; font-size: 10px; }
-  .node-quota { gap: 6px; }
-  .node-quota-meter { width: 56px; }
-  .node-expiry { margin-left: auto; padding-left: 8px; }
+  .node-panel summary { display: grid; grid-template-areas: "title count" "status status"; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 10px; row-gap: 8px; }
+  .node-panel summary > .section-title { grid-area: title; min-width: 0; }
+  .node-panel .summary-hint { grid-area: count; align-self: center; justify-self: end; margin: 0; padding-left: 0; border-left: 0; }
+  .node-summary-status { display: grid; grid-area: status; grid-template-columns: minmax(0, 1fr) auto; width: 100%; min-width: 0; align-items: center; gap: 8px; margin: 0; font-size: 10px; }
+  .node-quota { min-width: 0; gap: 6px; }
+  .node-quota-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .node-quota-meter { width: 52px; flex: 0 0 52px; }
+  .node-expiry { margin-left: 0; padding-left: 8px; }
   .node-table { min-width: 590px; font-size: 11px; }
   .node-table th, .node-table td { padding: 9px 10px; }
   .subscription-row { gap: 8px; }
