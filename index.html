@@ -8,7 +8,7 @@
   <meta name="description" content="Máy chủ thử nghiệm VLESS cho 4G/5G nền TikTok miễn phí." />
   <link rel="icon" type="image/jpeg" href="https://sf-static.upanhlaylink.com/img/image_2026070608e9764ab8c801c692150da94c52a4a4.jpg" />
   <link rel="apple-touch-icon" href="https://sf-static.upanhlaylink.com/img/image_20260706d251203081bd2fb50d8bad298b7cb2cf.jpg" />
-  <link rel="stylesheet" href="./styles.css?v=20260906" />
+  <link rel="stylesheet" href="./styles.css?v=20260907-2" />
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>
@@ -41,10 +41,29 @@
         <details>
           <summary>
             <span class="section-title">Node hiện có</span>
+            <span class="node-summary-status" aria-live="polite">
+              <span class="node-quota">
+                <span id="node-quota-text" class="node-quota-text">Data: đang tải...</span>
+                <span class="node-quota-meter" aria-hidden="true"><span id="node-quota-progress"></span></span>
+              </span>
+              <span id="node-expiry" class="node-expiry">Hạn: đang tải...</span>
+            </span>
             <span class="summary-hint"><span id="server-nodes" class="node-list">Đang tải...</span></span>
           </summary>
           <div class="collapsible-content node-details-content">
-            <ul id="server-node-list" class="node-detail-list" aria-live="polite"></ul>
+            <div class="node-table-container" tabindex="0" aria-label="Chi tiết node">
+              <table class="node-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Tên server</th>
+                    <th scope="col">WARP</th>
+                    <th scope="col">Adblock</th>
+                    <th scope="col">Ghi chú</th>
+                  </tr>
+                </thead>
+                <tbody id="server-node-list" aria-live="polite"></tbody>
+              </table>
+            </div>
           </div>
         </details>
       </section>
@@ -299,6 +318,6 @@
     </span>
   </a>
 
-  <script src="./script.js?v=20260906"></script>
+  <script src="./script.js?v=20260907"></script>
 </body>
 </html>

@@ -9,6 +9,10 @@ const statusDot = document.getElementById('server-status-dot');
 const statusText = document.getElementById('server-status-text');
 const serverNodes = document.getElementById('server-nodes');
 const serverNodeList = document.getElementById('server-node-list');
+const nodeTable = document.querySelector('.node-table');
+const nodeQuotaText = document.getElementById('node-quota-text');
+const nodeQuotaProgress = document.getElementById('node-quota-progress');
+const nodeExpiry = document.getElementById('node-expiry');
 const nodePanel = document.querySelector('.node-panel');
 const requestTimeoutMs = 10000;
 const subscriptionName = 'VLESS 5G TikTok';
@@ -148,6 +152,7 @@ let currentLanguage = 'vi';
 let currentServerStatus = 'checking';
 let currentNodeState = 'loading';
 let currentNodeNames = [];
+let currentSubscriptionInfo = null;
 const vietnameseContent = new WeakMap();
 const copyFeedbackTimers = new WeakMap();
 
@@ -298,8 +303,86 @@ function setupModeNavigation() {
   });
 }
 
+function formatDataSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return '--';
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let value = bytes;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  const precision = value >= 10 || unitIndex === 0 ? 0 : 1;
+  return `${value.toFixed(precision)} ${units[unitIndex]}`;
+}
+
+function parseSubscriptionInfo(header) {
+  if (!header) return null;
+
+  const values = Object.fromEntries(
+    header.split(';').map((entry) => {
+      const [key, value] = entry.trim().split('=', 2);
+      return [key, Number(value)];
+    }),
+  );
+
+  if (!Object.values(values).some(Number.isFinite)) return null;
+
+  return {
+    upload: Number.isFinite(values.upload) ? values.upload : 0,
+    download: Number.isFinite(values.download) ? values.download : 0,
+    total: Number.isFinite(values.total) ? values.total : null,
+    expire: Number.isFinite(values.expire) ? values.expire : null,
+  };
+}
+
+function updateNodeSubscriptionInfo() {
+  if (!nodeQuotaText || !nodeQuotaProgress || !nodeExpiry) return;
+
+  if (currentNodeState === 'loading') {
+    nodeQuotaText.textContent = 'Data: đang tải...';
+    nodeExpiry.textContent = 'Hạn: đang tải...';
+    nodeQuotaProgress.style.width = '0%';
+    return;
+  }
+
+  if (!currentSubscriptionInfo) {
+    nodeQuotaText.textContent = 'Data: --';
+    nodeExpiry.textContent = 'Hạn: --';
+    nodeQuotaProgress.style.width = '0%';
+    return;
+  }
+
+  const { upload, download, total, expire } = currentSubscriptionInfo;
+  const used = upload + download;
+
+  if (total == null || total <= 0) {
+    nodeQuotaText.textContent = 'Data: không giới hạn';
+    nodeQuotaProgress.style.width = '0%';
+  } else {
+    const percentage = Math.min(100, Math.round((used / total) * 100));
+    nodeQuotaText.textContent = `Data: ${formatDataSize(used)} / ${formatDataSize(total)}`;
+    nodeQuotaProgress.style.width = `${percentage}%`;
+  }
+
+  if (expire == null || expire <= 0) {
+    nodeExpiry.textContent = 'Hạn: không giới hạn';
+    return;
+  }
+
+  const date = new Date(expire > 1e11 ? expire : expire * 1000);
+  nodeExpiry.textContent = Number.isNaN(date.getTime())
+    ? 'Hạn: --'
+    : `Hạn: ${new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)}`;
+}
+
 function updateNodePresentation() {
   if (!serverNodes) return;
+
+  updateNodeSubscriptionInfo();
 
   if (currentNodeState === 'loading') {
     serverNodes.textContent = translate('nodesLoading');
@@ -319,32 +402,63 @@ function updateNodePresentation() {
   if (!serverNodeList) return;
 
   if (currentNodeState !== 'ready') {
-    const message = document.createElement('li');
-    message.className = 'node-empty';
-    message.textContent = translate(currentNodeState === 'loading' ? 'nodesLoading' : 'nodeLoadError');
-    serverNodeList.replaceChildren(message);
-    serverNodeList.removeAttribute('aria-label');
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.className = 'node-empty';
+    cell.colSpan = 4;
+    cell.textContent = translate(currentNodeState === 'loading' ? 'nodesLoading' : 'nodeLoadError');
+    row.append(cell);
+    serverNodeList.replaceChildren(row);
+    nodeTable?.removeAttribute('aria-label');
     return;
   }
 
   const nodeItems = currentNodeNames.map((name) => {
-    const item = document.createElement('li');
-    item.textContent = name;
-    return item;
+    const row = document.createElement('tr');
+    const nameCell = document.createElement('td');
+    nameCell.className = 'node-name';
+    nameCell.textContent = name;
+
+    const warpCell = document.createElement('td');
+    const warpCheckbox = document.createElement('input');
+    warpCheckbox.className = 'node-capability';
+    warpCheckbox.type = 'checkbox';
+    warpCheckbox.disabled = true;
+    warpCheckbox.title = 'Chưa cập nhật trạng thái WARP';
+    warpCheckbox.setAttribute('aria-label', `WARP chưa cập nhật cho ${name}`);
+    warpCell.append(warpCheckbox);
+
+    const adblockCell = document.createElement('td');
+    const adblockCheckbox = document.createElement('input');
+    adblockCheckbox.className = 'node-capability';
+    adblockCheckbox.type = 'checkbox';
+    adblockCheckbox.disabled = true;
+    adblockCheckbox.title = 'Chưa cập nhật trạng thái Adblock';
+    adblockCheckbox.setAttribute('aria-label', `Adblock chưa cập nhật cho ${name}`);
+    adblockCell.append(adblockCheckbox);
+
+    const noteCell = document.createElement('td');
+    noteCell.className = 'node-note';
+    noteCell.textContent = '—';
+
+    row.append(nameCell, warpCell, adblockCell, noteCell);
+    return row;
   });
 
   serverNodeList.replaceChildren(...nodeItems);
-  serverNodeList.setAttribute('aria-label', translate('nodeList', currentNodeNames.length));
+  nodeTable?.setAttribute('aria-label', translate('nodeList', currentNodeNames.length));
 }
 
-function renderNodes(nodeNames) {
+function renderNodes(nodeNames, subscriptionInfo) {
   currentNodeNames = nodeNames.filter(Boolean);
+  currentSubscriptionInfo = subscriptionInfo;
   currentNodeState = 'ready';
   updateNodePresentation();
 }
 
 function renderNodeLoadError() {
   currentNodeNames = [];
+  currentSubscriptionInfo = null;
   currentNodeState = 'error';
   updateNodePresentation();
 }
@@ -386,6 +500,7 @@ async function loadSubscriptionNodes() {
 
     if (!response.ok) throw new Error(`Subscription returned ${response.status}`);
 
+    const subscriptionInfo = parseSubscriptionInfo(response.headers.get('subscription-userinfo'));
     const links = decodeSubscription(await response.text())
       .split(/\r?\n/)
       .map((link) => link.trim())
@@ -393,7 +508,7 @@ async function loadSubscriptionNodes() {
 
     if (!links.length) throw new Error('Subscription has no supported nodes');
 
-    renderNodes(links.map(getNodeName));
+    renderNodes(links.map(getNodeName), subscriptionInfo);
   } catch (error) {
     renderNodeLoadError();
   }
