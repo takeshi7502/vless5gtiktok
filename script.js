@@ -149,6 +149,7 @@ let currentServerStatus = 'checking';
 let currentNodeState = 'loading';
 let currentNodeNames = [];
 const vietnameseContent = new WeakMap();
+const copyFeedbackTimers = new WeakMap();
 
 function translate(key, ...args) {
   const value = localizedText[currentLanguage][key];
@@ -235,11 +236,13 @@ async function copySubscription() {
     copyLabel.textContent = didCopy ? translate('copySuccess') : translate('copyRetry');
   }
   copyButton.classList.toggle('copied', didCopy);
+  copyButton.classList.add('is-feedback');
+  window.clearTimeout(copyFeedbackTimers.get(copyButton));
 
-  window.setTimeout(() => {
+  copyFeedbackTimers.set(copyButton, window.setTimeout(() => {
     if (copyLabel) copyLabel.textContent = defaultLabel;
-    copyButton.classList.remove('copied');
-  }, 2000);
+    copyButton.classList.remove('copied', 'is-feedback');
+  }, 2000));
 }
 
 async function copySetupCommand(button) {
@@ -249,13 +252,15 @@ async function copySetupCommand(button) {
   if (!command) return;
 
   const didCopy = await copyText(command);
-  if (label) label.textContent = didCopy ? 'COPIED' : 'RETRY';
+  if (label) label.textContent = didCopy ? translate('copySuccess') : translate('copyRetry');
   button.classList.toggle('copied', didCopy);
+  button.classList.add('is-feedback');
+  window.clearTimeout(copyFeedbackTimers.get(button));
 
-  window.setTimeout(() => {
+  copyFeedbackTimers.set(button, window.setTimeout(() => {
     if (label) label.textContent = 'COPY';
-    button.classList.remove('copied');
-  }, 2000);
+    button.classList.remove('copied', 'is-feedback');
+  }, 2000));
 }
 
 function selectSetupMode(mode) {
@@ -314,7 +319,10 @@ function updateNodePresentation() {
   if (!serverNodeList) return;
 
   if (currentNodeState !== 'ready') {
-    serverNodeList.replaceChildren();
+    const message = document.createElement('li');
+    message.className = 'node-empty';
+    message.textContent = translate(currentNodeState === 'loading' ? 'nodesLoading' : 'nodeLoadError');
+    serverNodeList.replaceChildren(message);
     serverNodeList.removeAttribute('aria-label');
     return;
   }
