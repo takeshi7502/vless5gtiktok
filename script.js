@@ -14,6 +14,8 @@ const nodeQuotaText = document.getElementById('node-quota-text');
 const nodeQuotaProgress = document.getElementById('node-quota-progress');
 const nodeExpiry = document.getElementById('node-expiry');
 const nodePanel = document.querySelector('.node-panel');
+const nodeTooltipTriggers = document.querySelectorAll('.node-tooltip[data-tooltip]');
+const nodeTooltipPopover = document.getElementById('node-tooltip-popover');
 const requestTimeoutMs = 10000;
 const subscriptionName = 'VLESS 5G TikTok';
 const subscriptionDataUrl = '/subscription-source';
@@ -281,6 +283,49 @@ function selectSetupMode(mode) {
   setupModeGuides.forEach((guide) => {
     guide.hidden = guide.dataset.setupGuide !== mode;
   });
+}
+
+function showNodeTooltip(trigger) {
+  if (!nodeTooltipPopover) return;
+
+  const message = trigger.dataset.tooltip;
+  if (!message) return;
+
+  nodeTooltipPopover.textContent = message;
+  nodeTooltipPopover.hidden = false;
+  nodeTooltipPopover.style.left = '0px';
+  nodeTooltipPopover.style.top = '0px';
+
+  const anchorRect = trigger.getBoundingClientRect();
+  const headerRect = trigger.closest('th')?.getBoundingClientRect();
+  const tooltipRect = nodeTooltipPopover.getBoundingClientRect();
+  const viewportPadding = 12;
+  const minCenter = (tooltipRect.width / 2) + viewportPadding;
+  const maxCenter = window.innerWidth - (tooltipRect.width / 2) - viewportPadding;
+  const center = Math.min(maxCenter, Math.max(minCenter, anchorRect.left + (anchorRect.width / 2)));
+  const top = Math.max(viewportPadding, (headerRect?.top ?? anchorRect.top) - tooltipRect.height - 8);
+
+  nodeTooltipPopover.style.left = `${center}px`;
+  nodeTooltipPopover.style.top = `${top}px`;
+}
+
+function hideNodeTooltip() {
+  if (nodeTooltipPopover) nodeTooltipPopover.hidden = true;
+}
+
+function setupNodeTooltips() {
+  nodeTooltipTriggers.forEach((trigger) => {
+    trigger.addEventListener('mouseenter', () => showNodeTooltip(trigger));
+    trigger.addEventListener('mouseleave', hideNodeTooltip);
+    trigger.addEventListener('focus', () => showNodeTooltip(trigger));
+    trigger.addEventListener('blur', hideNodeTooltip);
+    trigger.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') hideNodeTooltip();
+    });
+  });
+
+  window.addEventListener('resize', hideNodeTooltip);
+  window.addEventListener('scroll', hideNodeTooltip, true);
 }
 
 function setupModeNavigation() {
@@ -659,6 +704,7 @@ setupGithubLink?.addEventListener('click', (event) => event.stopPropagation());
 setupGithubLink?.addEventListener('keydown', (event) => event.stopPropagation());
 
 applyLanguage(currentLanguage);
+setupNodeTooltips();
 setupModeNavigation();
 hydrateClientLinks();
 pingSubscriptionUrl();
