@@ -5,10 +5,11 @@
     { "sst": 3, "warp": 1, "adblock": 0, "note": "" },
     { "sst": 4, "warp": 1, "adblock": 0, "note": "" },
     { "sst": 5, "warp": 1, "adblock": 0, "note": "" },
-    { "sst": 6, "warp": 1, "adblock": 1, "note": "" },
+    { "sst": 6, "warp": 1, "adblock": 0, "note": "" },
     { "sst": 7, "warp": 1, "adblock": 1, "note": "" },
-    { "sst": 8, "warp": 0, "adblock": 0, "note": "1. Server phụ" },
-    { "sst": 9, "warp": 0, "adblock": 0, "note": "2. Giới hạn 2 thiết bị" },
-    { "sst": 10, "warp": 0, "adblock": 0, "note": "3. Hạn đến 1/10/2026" }
+    { "sst": 8, "warp": 1, "adblock": 1, "note": "" },
+    { "sst": 9, "warp": 0, "adblock": 0, "note": "1. Server phụ" },
+    { "sst": 10, "warp": 0, "adblock": 0, "note": "2. Giới hạn 2 thiết bị" },
+    { "sst": 11, "warp": 0, "adblock": 0, "note": "3. Hạn đến 1/10/2026" }
   ]
 }
