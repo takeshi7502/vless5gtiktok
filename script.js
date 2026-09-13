@@ -4,6 +4,8 @@ const subscriptionUrl = copyButton?.dataset.subscriptionUrl;
 const commandCopyButtons = document.querySelectorAll('[data-copy-command]');
 const setupModeButtons = document.querySelectorAll('[data-setup-mode]');
 const setupModeGuides = document.querySelectorAll('[data-setup-guide]');
+const hostTypeButtons = document.querySelectorAll('[data-host-type]');
+const hostGuidePanels = document.querySelectorAll('[data-host-guide]');
 const setupGithubLink = document.querySelector('.setup-github-link');
 const statusDot = document.getElementById('server-status-dot');
 const statusText = document.getElementById('server-status-text');
@@ -36,6 +38,11 @@ const localizedElements = [
   { selector: '.client-picker-header .panel-kicker', en: 'IMPORT INTO ANDROID APP' },
   { selector: '.guide-section', attribute: 'aria-label', en: 'Guides' },
   { selector: '#server-setup > details > summary .section-title', en: 'Self-host a private server <span>VLESS-WS</span>' },
+  { selector: '#server-setup .host-type-tabs', attribute: 'aria-label', en: 'Choose a self-host method' },
+  { selector: '#host-type-no-root strong', en: 'No Root' },
+  { selector: '#host-type-no-root small', en: 'VPS, Termux, or Windows' },
+  { selector: '#host-type-root strong', en: 'Rooted' },
+  { selector: '#host-type-root small', en: 'Android with Xray Server Native' },
   { selector: '#server-setup .setup-summary-copy', en: 'VPS Ubuntu or Termux for Android' },
   { selector: '#server-setup .setup-cta', en: 'OPEN SETUP <span aria-hidden="true">+</span>' },
   { selector: '#server-setup .setup-intro', en: 'Run one command to install git when needed, clone or update the source in <code>~/vless</code>, then open the setup menu.' },
@@ -68,6 +75,58 @@ const localizedElements = [
     'Open TCP <code>80</code> only when needed and restrict inbound traffic to Cloudflare IP ranges where possible. Confirm that DNS is proxied before importing the link.',
   ] },
   { selector: '#setup-guide-direct .setup-guide-callout', en: '<strong>Security note:</strong> with Flexible, the Cloudflare-to-VPS leg has no TLS encryption. Use it only on infrastructure you manage and configure origin TLS when needed.' },
+  { selector: '#host-guide-root .setup-intro', en: 'Turn a rooted ARM64 Android phone into a private server: 3x-ui and Xray run natively, with a local manager for control.' },
+  { selector: '#host-guide-root .root-setup-overview section:nth-child(1) .panel-kicker', en: 'INSTALL MODULE' },
+  { selector: '#host-guide-root .root-setup-overview section:nth-child(1) p:last-child', en: 'Download <a href="https://github.com/takeshi7502/Xray_Server_Native/releases/tag/v1.0.0" target="_blank" rel="noopener">Xray Server Native v1.0.0</a>, flash the <code>.zip</code> in Magisk or KernelSU, then restart the phone.' },
+  { selector: '#host-guide-root .root-setup-overview section:nth-child(2) .panel-kicker', en: 'LOCAL MANAGER' },
+  { selector: '#host-guide-root .root-setup-overview section:nth-child(2) p:last-child', en: 'Open <code>http://127.0.0.1:2036</code> on the phone. From there, open 3x-ui, copy its password, and control the tunnel.' },
+  { selector: '#host-guide-root > h3', en: ['Choose the right mode', 'Set up each mode'] },
+  { selector: '#host-guide-root .root-mode-card .root-mode-name', en: ['Quick Tunnel', 'Custom domain', '3x-ui Tunnel'] },
+  { selector: '#host-guide-root .root-mode-card .root-mode-copy', en: [
+    'Creates a temporary <code>trycloudflare.com</code> link for native Xray. Use it to test before you own a domain.',
+    'Uses a Cloudflare Named Tunnel and your domain to publish VLESS from native Xray.',
+    'Uses 3x-ui to manage clients, traffic, and expiry through a separate Named Tunnel.',
+  ] },
+  { selector: '#host-guide-root .root-mode-card .root-mode-meta', en: [
+    'No domain · WebSocket · hostname changes after restart',
+    'Stable domain · native Xray · local route 8888',
+    'Stable domain · 3x-ui · quota and subscriptions',
+  ] },
+  { selector: '#host-guide-root .root-mode-separation', en: 'Modes 1 and 2 share native Xray, so starting Mode 2 replaces Mode 1. Mode 3 has its own 3x-ui tunnel and does not affect the other two modes.' },
+  { selector: '#host-guide-root .root-mode-block h4', en: ['Mode 1 · Quick Tunnel', 'Mode 2 · Custom domain', 'Mode 3 · 3x-ui Tunnel'] },
+  { selector: '#host-guide-root [data-root-mode="quick"] > p:not(.setup-guide-callout)', en: 'Use this to confirm that the phone and module work before configuring a domain.' },
+  { selector: '#host-guide-root [data-root-mode="quick"] .setup-steps li', en: [
+    'Open Local Manager at <code>http://127.0.0.1:2036</code> and select <strong>Mode 1</strong>.',
+    'Choose Free TikTok, Free Vina Ko Nen, or both as Fake SNI. Keep the default path unless you need a custom one.',
+    'Select <strong>Create Mode 1</strong>, then copy the VLESS link returned and import it into a client app.',
+  ] },
+  { selector: '#host-guide-root [data-root-mode="quick"] .setup-guide-callout', en: '<strong>Testing only:</strong> the <code>trycloudflare.com</code> hostname changes when the tunnel restarts. This mode is WebSocket-only and does not manage quotas through 3x-ui.' },
+  { selector: '#host-guide-root [data-root-mode="named"] > p:not(.setup-guide-callout)', en: 'Use this when native Xray needs a stable hostname but you do not need 3x-ui client management.' },
+  { selector: '#host-guide-root [data-root-mode="named"] .setup-steps li', en: [
+    'In Cloudflare Zero Trust, create a <strong>Named Tunnel</strong> of type Cloudflared and copy its connector token.',
+    'On that tunnel, add a <strong>Public Hostname</strong>, such as <code>vpn.example.com</code>, with an HTTP service to <code>127.0.0.1:8888</code>.',
+    'In Local Manager, open <strong>Mode 2</strong> and enter the hostname and connector token.',
+    'Choose Fake SNI, 80/443 link ports, WebSocket, xHTTP, or both. Choose an xHTTP mode only when using xHTTP.',
+    'Select <strong>Create Mode 2</strong> and import the VLESS link below the form.',
+  ] },
+  { selector: '#host-guide-root [data-root-mode="named"] .setup-guide-callout', en: '<strong>Important route:</strong> Mode 2 uses only <code>http://127.0.0.1:8888</code>. It needs no router port forwarding, A/AAAA record to the phone, or 8080/2096 routes.' },
+  { selector: '#host-guide-root [data-root-mode="panel"] > p:not(.setup-guide-callout)', en: 'Use this mode to share subscriptions or manage traffic, quotas, expiry, and clients from 3x-ui.' },
+  { selector: '#host-guide-root .root-route-table', attribute: 'aria-label', en: 'Public Hostname routes required for Mode 3' },
+  { selector: '#host-guide-root .root-route-table th', en: ['Hostname', 'Cloudflare service', 'Required'] },
+  { selector: '#host-guide-root .root-route-table td:nth-child(1)', en: [
+    'VPN, for example <code>vpn.example.com</code>',
+    'Subscription, for example <code>sub.example.com</code>',
+    'Panel, for example <code>panel.example.com</code>',
+  ] },
+  { selector: '#host-guide-root .root-route-table td:nth-child(3)', en: ['Yes', 'When sharing a subscription', 'Optional'] },
+  { selector: '#host-guide-root [data-root-mode="panel"] .setup-steps li', en: [
+    'In Cloudflare Zero Trust, create a <strong>Named Tunnel</strong> of type Cloudflared and add the Public Hostnames in the table first.',
+    'Open <strong>Mode 3</strong> in Local Manager; enter the VPN and subscription hostnames, an optional panel hostname, then paste the connector token.',
+    'Choose Fake SNI, 80/443 link ports, and WS, xHTTP, or both. When choosing xHTTP, also choose an xHTTP mode.',
+    'Select <strong>Create Mode 3</strong>. The manager creates the inbound and client in 3x-ui; existing inbounds remain when you create another configuration.',
+    'Copy the subscription link into a client app. The manager attaches its extra links to the 3x-ui client; keep managing quotas, expiry, and users in 3x-ui.',
+  ] },
+  { selector: '#host-guide-root [data-root-mode="panel"] .setup-guide-callout', en: '<strong>Security:</strong> do not enable Cloudflare Access for VPN or subscription hostnames because client apps cannot authenticate to Access. If the panel is public, protect only its hostname with Access and still prefer the local panel.' },
   { selector: '#server-setup .setup-note', en: 'This proof of concept is for learning purposes. It does not guarantee zero-rating, free data, or the ability to bypass carrier limits.' },
   { selector: '#operating-principle .section-title', en: 'How it works <span>(Bandwidth bypass)</span>' },
   { selector: '#operating-principle p', en: '<strong>In simple terms:</strong> When a TikTok plan allows traffic for that app, the server is presented as TikTok traffic. The VPN client wraps your traffic before sending it to the VLESS server, which then connects to the requested destination.' },
@@ -285,6 +344,24 @@ function selectSetupMode(mode) {
   });
 }
 
+function selectHostGuide(hostType) {
+  hostTypeButtons.forEach((button) => {
+    const isSelected = button.dataset.hostType === hostType;
+    button.classList.toggle('is-selected', isSelected);
+    button.setAttribute('aria-selected', String(isSelected));
+    button.tabIndex = isSelected ? 0 : -1;
+
+    if (isSelected && setupGithubLink) {
+      setupGithubLink.href = button.dataset.hostRepository;
+      setupGithubLink.setAttribute('aria-label', currentLanguage === 'en' ? 'Open repository on GitHub' : 'Mở repository trên GitHub');
+    }
+  });
+
+  hostGuidePanels.forEach((panel) => {
+    panel.hidden = panel.dataset.hostGuide !== hostType;
+  });
+}
+
 function showNodeTooltip(trigger) {
   if (!nodeTooltipPopover) return;
 
@@ -345,6 +422,23 @@ function setupModeNavigation() {
       const nextIndex = (index + direction + setupModeButtons.length) % setupModeButtons.length;
       const nextButton = setupModeButtons[nextIndex];
       selectSetupMode(nextButton.dataset.setupMode);
+      nextButton.focus();
+    });
+  });
+}
+
+function setupHostGuideNavigation() {
+  hostTypeButtons.forEach((button, index) => {
+    button.addEventListener('click', () => selectHostGuide(button.dataset.hostType));
+
+    button.addEventListener('keydown', (event) => {
+      if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) return;
+
+      event.preventDefault();
+      const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
+      const nextIndex = (index + direction + hostTypeButtons.length) % hostTypeButtons.length;
+      const nextButton = hostTypeButtons[nextIndex];
+      selectHostGuide(nextButton.dataset.hostType);
       nextButton.focus();
     });
   });
@@ -706,6 +800,7 @@ setupGithubLink?.addEventListener('keydown', (event) => event.stopPropagation())
 applyLanguage(currentLanguage);
 setupNodeTooltips();
 setupModeNavigation();
+setupHostGuideNavigation();
 hydrateClientLinks();
 pingSubscriptionUrl();
 loadNodeMetadata().finally(loadSubscriptionNodes);

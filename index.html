@@ -195,6 +195,18 @@
             </span>
           </summary>
           <div class="collapsible-content setup-content">
+            <div class="host-type-tabs" role="tablist" aria-label="Chọn kiểu tự host">
+              <button id="host-type-no-root" class="host-type-tab is-selected" type="button" role="tab" aria-selected="true" aria-controls="host-guide-no-root" data-host-type="no-root" data-host-repository="https://github.com/takeshi7502/xray_vless_ws_server">
+                <span class="host-type-number">A</span>
+                <span><strong>Không root</strong><small>VPS, Termux hoặc Windows</small></span>
+              </button>
+              <button id="host-type-root" class="host-type-tab" type="button" role="tab" aria-selected="false" aria-controls="host-guide-root" tabindex="-1" data-host-type="root" data-host-repository="https://github.com/takeshi7502/Xray_Server_Native">
+                <span class="host-type-number">B</span>
+                <span><strong>Đã root</strong><small>Android chạy Xray Server Native</small></span>
+              </button>
+            </div>
+
+            <section id="host-guide-no-root" class="host-guide-panel" role="tabpanel" aria-labelledby="host-type-no-root" data-host-guide="no-root">
             <p class="setup-intro">Chọn môi trường tương ứng để tải source và mở menu setup.</p>
 
             <div class="install-command-grid">
@@ -285,6 +297,112 @@
                 <li>Chỉ mở TCP <code>80</code> khi cần và nên giới hạn inbound theo dải IP Cloudflare. Kiểm tra lại DNS đã proxy trước khi import link.</li>
               </ol>
               <p class="setup-guide-callout"><strong>Lưu ý bảo mật:</strong> với Flexible, đoạn Cloudflare đến VPS không mã hóa TLS. Chỉ dùng trên hạ tầng bạn quản trị và cân nhắc cấu hình TLS origin phù hợp khi cần.</p>
+            </section>
+            </section>
+
+            <section id="host-guide-root" class="host-guide-panel" role="tabpanel" aria-labelledby="host-type-root" data-host-guide="root" hidden>
+              <p class="setup-intro">Biến điện thoại Android ARM64 đã root thành server riêng: 3x-ui và Xray chạy native, quản lý tại chỗ qua Local Manager.</p>
+
+              <div class="root-setup-overview">
+                <section>
+                  <p class="panel-kicker">Cài module</p>
+                  <p>Tải module <a href="https://github.com/takeshi7502/Xray_Server_Native/releases/tag/v1.0.0" target="_blank" rel="noopener">Xray Server Native</a>, flash file <code>.zip</code> trong Magisk hoặc KernelSU, rồi khởi động lại máy.</p>
+                </section>
+                <section>
+                  <p class="panel-kicker">Quản lý local</p>
+                  <p>Mở <code>http://127.0.0.1:2036</code> trên chính điện thoại. Từ đây có thể mở 3x-ui, sao chép password, chạy hoặc dừng tunnel.</p>
+                </section>
+              </div>
+
+              <h3>Chọn mode đúng nhu cầu</h3>
+              <div class="root-mode-grid" aria-label="Ba chế độ triển khai của Xray Server Native">
+                <section class="root-mode-card">
+                  <p class="panel-kicker">Mode 1</p>
+                  <h4 class="root-mode-name">Quick Tunnel</h4>
+                  <p class="root-mode-copy">Tạo link <code>trycloudflare.com</code> tạm thời cho Xray native. Dùng để kiểm tra nhanh khi chưa có domain.</p>
+                  <p class="root-mode-meta">Không domain · WebSocket · link đổi khi tunnel restart</p>
+                </section>
+                <section class="root-mode-card">
+                  <p class="panel-kicker">Mode 2</p>
+                  <h4 class="root-mode-name">Domain riêng</h4>
+                  <p class="root-mode-copy">Dùng Named Tunnel và domain Cloudflare của bạn để xuất VLESS từ Xray native.</p>
+                  <p class="root-mode-meta">Domain cố định · Xray native · route nội bộ 8888</p>
+                </section>
+                <section class="root-mode-card root-mode-card-primary">
+                  <p class="panel-kicker">Mode 3</p>
+                  <h4 class="root-mode-name">3x-ui Tunnel</h4>
+                  <p class="root-mode-copy">Dùng 3x-ui để quản lý client, dung lượng và ngày hết hạn qua một Named Tunnel riêng.</p>
+                  <p class="root-mode-meta">Domain cố định · 3x-ui · quota và subscription</p>
+                </section>
+              </div>
+              <p class="root-mode-separation">Mode 1 và Mode 2 dùng chung Xray native, vì vậy chạy Mode 2 sẽ thay thế Mode 1. Mode 3 có tunnel 3x-ui riêng và không ảnh hưởng hai mode kia.</p>
+
+              <h3>Thiết lập theo mode</h3>
+
+              <section class="root-mode-block" data-root-mode="quick">
+                <h4>Mode 1 · Quick Tunnel</h4>
+                <p>Phù hợp để xác nhận máy và module hoạt động trước khi cấu hình domain.</p>
+                <ol class="setup-steps">
+                  <li>Mở Local Manager tại <code>http://127.0.0.1:2036</code>, vào tab <strong>Mode 1</strong>.</li>
+                  <li>Chọn Fake SNI: Free TikTok, Free Vina Ko Nen hoặc cả hai; để path mặc định nếu không có nhu cầu riêng.</li>
+                  <li>Nhấn <strong>Tạo Mode 1</strong>, rồi sao chép link VLESS được trả về để import vào app client.</li>
+                </ol>
+                <p class="setup-guide-callout"><strong>Chỉ để thử:</strong> hostname <code>trycloudflare.com</code> thay đổi khi tunnel khởi động lại. Mode này chỉ chạy WebSocket và không quản lý quota qua 3x-ui.</p>
+              </section>
+
+              <section class="root-mode-block" data-root-mode="named">
+                <h4>Mode 2 · Domain riêng</h4>
+                <p>Dùng khi muốn Xray native có hostname cố định nhưng chưa cần bảng quản lý user của 3x-ui.</p>
+                <ol class="setup-steps">
+                  <li>Trong Cloudflare Zero Trust, tạo <strong>Named Tunnel</strong> loại Cloudflared và sao chép connector token.</li>
+                  <li>Trên tunnel đó, tạo một <strong>Public Hostname</strong>, ví dụ <code>vpn.example.com</code>, với service HTTP tới <code>127.0.0.1:8888</code>.</li>
+                  <li>Trong Local Manager, vào <strong>Mode 2</strong>, điền hostname và connector token.</li>
+                  <li>Chọn Fake SNI, link port 80/443, WebSocket, xHTTP hoặc cả hai; xHTTP mode chỉ cần chọn khi dùng xHTTP.</li>
+                  <li>Nhấn <strong>Tạo Mode 2</strong> và import link VLESS xuất hiện bên dưới form.</li>
+                </ol>
+                <p class="setup-guide-callout"><strong>Route quan trọng:</strong> Mode 2 chỉ dùng route <code>http://127.0.0.1:8888</code>. Không cần mở port router, A/AAAA record trỏ IP điện thoại hay tạo route 8080/2096 cho mode này.</p>
+              </section>
+
+              <section class="root-mode-block root-mode-block-primary" data-root-mode="panel">
+                <h4>Mode 3 · 3x-ui Tunnel</h4>
+                <p>Đây là mode nên dùng khi chia sẻ subscription hoặc cần theo dõi traffic, quota, ngày hết hạn và client trong 3x-ui.</p>
+                <div class="root-route-table" role="region" aria-label="Các Public Hostname cần tạo cho Mode 3" tabindex="0">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Hostname</th>
+                        <th scope="col">Service trong Cloudflare</th>
+                        <th scope="col">Bắt buộc</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>VPN, ví dụ <code>vpn.example.com</code></td>
+                        <td><code>http://127.0.0.1:8080</code></td>
+                        <td>Có</td>
+                      </tr>
+                      <tr>
+                        <td>Subscription, ví dụ <code>sub.example.com</code></td>
+                        <td><code>http://127.0.0.1:2096</code></td>
+                        <td>Khi chia sẻ link sub</td>
+                      </tr>
+                      <tr>
+                        <td>Panel, ví dụ <code>panel.example.com</code></td>
+                        <td><code>http://127.0.0.1:2053</code></td>
+                        <td>Không bắt buộc</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <ol class="setup-steps">
+                  <li>Trong Cloudflare Zero Trust, tạo một <strong>Named Tunnel</strong> loại Cloudflared và tạo các Public Hostname ở bảng trên trước.</li>
+                  <li>Mở tab <strong>Mode 3</strong> trong Local Manager, điền VPN hostname, subscription hostname, panel hostname nếu cần, rồi dán connector token.</li>
+                  <li>Chọn Fake SNI, link port 80/443 và transport WS, xHTTP hoặc cả hai. Khi chọn xHTTP, chọn thêm xHTTP mode phù hợp.</li>
+                  <li>Nhấn <strong>Tạo Mode 3</strong>. Manager tự tạo inbound và client trong 3x-ui; khi tạo cấu hình mới, inbound cũ được giữ lại.</li>
+                  <li>Sao chép link subscription để import vào client. Các link bổ sung do manager tạo được gắn vào client của 3x-ui; chỉnh quota, hạn dùng và user tiếp tục trong 3x-ui.</li>
+                </ol>
+                <p class="setup-guide-callout"><strong>Bảo mật:</strong> không bật Cloudflare Access cho hostname VPN hoặc subscription vì app client không xác thực Access. Nếu public panel, chỉ bảo vệ riêng hostname panel bằng Access và vẫn ưu tiên dùng panel local.</p>
+              </section>
             </section>
 
             <p class="setup-note">Đây là proof-of-concept phục vụ mục đích học tập. Không có bảo đảm về zero-rating, dung lượng miễn phí hoặc khả năng vượt giới hạn của nhà mạng.</p>

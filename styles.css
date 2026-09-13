@@ -368,6 +368,39 @@ details[open] > summary .summary-hint::after { transform: rotate(180deg); }
 .setup-guide summary:hover .setup-cta { background: #b5f4d7; }
 .setup-github-link:active, .setup-guide summary:active .setup-cta { transform: translate(1px, 1px); box-shadow: none; }
 .setup-intro { color: #becbc5; }
+.host-type-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.host-type-tab { display: flex; min-width: 0; min-height: 68px; align-items: center; gap: 10px; padding: 10px; border: 1px solid #435b4e; border-radius: 4px; background: #202e27; color: var(--text); text-align: left; transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease; }
+.host-type-tab:hover { background: #2c4235; transform: translateY(-2px); }
+.host-type-tab.is-selected { border-color: var(--mint); background: #2e4638; }
+.host-type-number { display: grid; width: 23px; height: 23px; flex: 0 0 23px; place-items: center; border: 1px solid #516453; border-radius: 2px; color: var(--gold); font-family: var(--mono); font-size: 11px; line-height: 1; }
+.host-type-tab.is-selected .host-type-number { border-color: var(--mint); background: var(--mint); color: #1c3327; }
+.host-type-tab strong, .host-type-tab small { display: block; }
+.host-type-tab strong { color: var(--text); font-size: 12px; line-height: 1.45; }
+.host-type-tab small { margin-top: 2px; color: #b0c1b7; font-size: 11px; line-height: 1.45; }
+.root-setup-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 16px; }
+.root-setup-overview section { min-width: 0; }
+.root-setup-overview section + section { padding-left: 18px; border-left: 1px solid #42594c; }
+.root-setup-overview .panel-kicker { margin-bottom: 7px; }
+.root-setup-overview p:last-child { color: #becbc5; font-size: 12px; line-height: 1.65; }
+.root-mode-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.root-mode-card { min-width: 0; padding: 14px; border: 1px solid #405e57; border-radius: 6px; background: #1d332f; }
+.root-mode-card-primary { border-color: #5d887b; background: #203b35; }
+.root-mode-card .panel-kicker { margin-bottom: 7px; color: #9fd5bd; }
+.root-mode-name { margin: 0; color: #edf4ee; font-size: 14px; }
+.root-mode-copy { margin: 8px 0 0; color: #becbc5; font-size: 12px; line-height: 1.65; }
+.root-mode-meta { margin: 10px 0 0; color: #a7c9b8; font-family: var(--mono); font-size: 10px; line-height: 1.55; }
+.root-mode-separation { margin: 14px 0 0; padding: 4px 0 4px 12px; border-left: 2px solid #c5b36a; color: #d5c896; font-size: 12px; line-height: 1.65; }
+.root-mode-block { margin-top: 18px; padding-top: 16px; border-top: 1px solid #42594c; }
+.root-mode-block-primary { border-top-color: #5d887b; }
+.root-mode-block h4 { margin: 0; color: #e6eee9; font-size: 14px; }
+.root-mode-block > p:not(.setup-guide-callout) { margin: 6px 0 0; color: #b8c6bf; font-size: 12px; line-height: 1.65; }
+.root-mode-block .setup-steps { margin-top: 12px; }
+.root-mode-block .setup-guide-callout { margin-top: 14px; padding: 4px 0 4px 12px; border-left: 2px solid var(--mint-deep); color: #b1c9bb; font-size: 12px; line-height: 1.65; }
+.root-route-table { width: 100%; min-width: 0; margin-top: 14px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-color: #78816d #1d332f; }
+.root-route-table table { min-width: 560px; }
+.root-route-table th:first-child, .root-route-table td:first-child { position: static; width: 37%; }
+.root-route-table th:nth-child(2), .root-route-table td:nth-child(2) { width: 42%; }
+.root-route-table th:nth-child(3), .root-route-table td:nth-child(3) { width: 21%; }
 .install-command-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
 .install-command { min-width: 0; }
 .install-command-windows { grid-column: 1 / -1; padding: 10px 12px; border: 1px solid #44564d; border-radius: 4px; background: #17231e; }
@@ -462,6 +495,9 @@ td:nth-child(3) strong { color: #d6e7bb; }
   .setup-guide > details > summary { flex-wrap: wrap; }
   .setup-summary-title { flex: 1 1 100%; }
   .setup-summary-actions { margin-left: 34px; }
+  .root-setup-overview { grid-template-columns: 1fr; gap: 14px; }
+  .root-setup-overview section + section { padding-top: 14px; padding-left: 0; border-top: 1px solid #42594c; border-left: 0; }
+  .root-mode-grid { grid-template-columns: 1fr; }
   .install-command-grid { grid-template-columns: 1fr; gap: 14px; }
   .setup-guide-heading { flex-direction: column; gap: 3px; }
   .setup-guide-heading p { text-align: left; }
@@ -512,9 +548,13 @@ td:nth-child(3) strong { color: #d6e7bb; }
   .setup-summary-actions { margin-left: 27px; }
   .setup-github-link, .setup-cta { min-height: 44px; padding-inline: 12px; font-size: 11px; }
   .setup-mode { min-height: 62px; flex-direction: column; align-items: center; gap: 5px; padding: 10px 4px; text-align: center; }
+  .host-type-tab { min-height: 60px; padding: 8px; }
+  .host-type-tab small { display: none; }
   .setup-mode strong { font-size: 10px; line-height: 1.5; }
   .setup-mode-number { width: 20px; height: 20px; flex-basis: 20px; font-size: 10px; }
   .setup-mode-description { display: none; }
+  .root-mode-card { padding: 12px; }
+  .root-route-table table { min-width: 520px; }
   .setup-guide-heading p { font-size: 11px; }
   .command-copy-row code { font-size: 10px; }
   .table-container { margin-top: 12px; }
