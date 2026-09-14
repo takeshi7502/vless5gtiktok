@@ -6,6 +6,9 @@ const setupModeButtons = document.querySelectorAll('[data-setup-mode]');
 const setupModeGuides = document.querySelectorAll('[data-setup-guide]');
 const hostTypeButtons = document.querySelectorAll('[data-host-type]');
 const hostGuidePanels = document.querySelectorAll('[data-host-guide]');
+const clientPlatformTabs = document.querySelectorAll('[data-client-platform]');
+const clientPlatformPanels = document.querySelectorAll('[data-client-platform-panel]');
+const clientPlatformStatus = document.getElementById('client-platform-status');
 const setupGithubLink = document.querySelector('.setup-github-link');
 const statusDot = document.getElementById('server-status-dot');
 const statusText = document.getElementById('server-status-text');
@@ -35,7 +38,10 @@ const localizedElements = [
   { selector: '.node-panel .section-title', en: 'Available nodes' },
   { selector: '#import-title', en: 'Import subscription' },
   { selector: '.client-picker', attribute: 'aria-label', en: 'Clients that support subscription import' },
-  { selector: '.client-picker-header .panel-kicker', en: 'IMPORT INTO ANDROID APP' },
+  { selector: '.connection-panel .import-panel > .import-panel-heading .panel-kicker', en: 'PLATFORM' },
+  { selector: '.client-platform-tabs', attribute: 'aria-label', en: 'Choose an app platform' },
+  { selector: '.client-platform-tab', en: ['Android', 'iOS', 'Windows', 'MacOS'] },
+  { selector: '.client-platform-title', en: ['Android', 'iOS', 'Windows', 'MacOS'] },
   { selector: '.guide-section', attribute: 'aria-label', en: 'Guides' },
   { selector: '#server-setup > details > summary .section-title', en: 'Self-host a private server <span>VLESS-WS</span>' },
   { selector: '#server-setup .host-type-tabs', attribute: 'aria-label', en: 'Choose a self-host method' },
@@ -186,6 +192,8 @@ const localizedText = {
   vi: {
     copySuccess: 'ĐÃ COPY',
     copyRetry: 'THỬ LẠI',
+    clientCopied: (name) => `Đã sao chép link cho ${name}`,
+    clientCopyRetry: 'Không sao chép được link. Thử lại.',
     nodesLoading: 'Đang tải...',
     nodeLoadError: 'Không tải được',
     nodeCount: (count) => `${count} node`,
@@ -198,6 +206,8 @@ const localizedText = {
   en: {
     copySuccess: 'COPIED',
     copyRetry: 'RETRY',
+    clientCopied: (name) => `Subscription copied for ${name}`,
+    clientCopyRetry: 'Could not copy the subscription. Try again.',
     nodesLoading: 'Loading...',
     nodeLoadError: 'Unable to load',
     nodeCount: (count) => `${count} node${count === 1 ? '' : 's'}`,
@@ -218,6 +228,7 @@ let currentSubscriptionInfo = null;
 let currentNodeMetadata = new Map();
 const vietnameseContent = new WeakMap();
 const copyFeedbackTimers = new WeakMap();
+let clientStatusTimer;
 
 function translate(key, ...args) {
   const value = localizedText[currentLanguage][key];
@@ -247,6 +258,15 @@ function updateClientAriaLabels() {
   document.querySelectorAll('[data-client]').forEach((client) => {
     const clientName = client.querySelector('span')?.textContent || 'client';
     client.setAttribute('aria-label', currentLanguage === 'en' ? `Import into ${clientName}` : `Nhập vào ${clientName}`);
+  });
+
+  document.querySelectorAll('[data-copy-client]').forEach((client) => {
+    const clientName = client.dataset.copyClient || 'client';
+    const label = currentLanguage === 'en'
+      ? `Copy subscription for ${clientName}`
+      : `Sao chép link để nhập vào ${clientName}`;
+    client.setAttribute('aria-label', label);
+    client.title = label;
   });
 }
 
@@ -331,6 +351,29 @@ async function copySetupCommand(button) {
   }, 2000));
 }
 
+async function copyClientSubscription(button) {
+  if (!subscriptionUrl) return;
+
+  const didCopy = await copyText(subscriptionUrl);
+  const clientName = button.dataset.copyClient || 'client';
+  if (clientPlatformStatus) {
+    clientPlatformStatus.textContent = didCopy
+      ? translate('clientCopied', clientName)
+      : translate('clientCopyRetry');
+  }
+
+  button.classList.toggle('is-feedback', didCopy);
+  window.clearTimeout(copyFeedbackTimers.get(button));
+  copyFeedbackTimers.set(button, window.setTimeout(() => {
+    button.classList.remove('is-feedback');
+  }, 900));
+
+  window.clearTimeout(clientStatusTimer);
+  clientStatusTimer = window.setTimeout(() => {
+    if (clientPlatformStatus) clientPlatformStatus.textContent = '';
+  }, 2500);
+}
+
 function selectSetupMode(mode) {
   setupModeButtons.forEach((button) => {
     const isSelected = button.dataset.setupMode === mode;
@@ -360,6 +403,21 @@ function selectHostGuide(hostType) {
   hostGuidePanels.forEach((panel) => {
     panel.hidden = panel.dataset.hostGuide !== hostType;
   });
+}
+
+function selectClientPlatform(platform) {
+  clientPlatformTabs.forEach((button) => {
+    const isSelected = button.dataset.clientPlatform === platform;
+    button.classList.toggle('is-selected', isSelected);
+    button.setAttribute('aria-selected', String(isSelected));
+    button.tabIndex = isSelected ? 0 : -1;
+  });
+
+  clientPlatformPanels.forEach((panel) => {
+    panel.hidden = panel.dataset.clientPlatformPanel !== platform;
+  });
+
+  if (clientPlatformStatus) clientPlatformStatus.textContent = '';
 }
 
 function showNodeTooltip(trigger) {
@@ -441,6 +499,27 @@ function setupHostGuideNavigation() {
       selectHostGuide(nextButton.dataset.hostType);
       nextButton.focus();
     });
+  });
+}
+
+function setupClientPlatformNavigation() {
+  clientPlatformTabs.forEach((button, index) => {
+    button.addEventListener('click', () => selectClientPlatform(button.dataset.clientPlatform));
+
+    button.addEventListener('keydown', (event) => {
+      if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) return;
+
+      event.preventDefault();
+      const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
+      const nextIndex = (index + direction + clientPlatformTabs.length) % clientPlatformTabs.length;
+      const nextButton = clientPlatformTabs[nextIndex];
+      selectClientPlatform(nextButton.dataset.clientPlatform);
+      nextButton.focus();
+    });
+  });
+
+  document.querySelectorAll('[data-copy-client]').forEach((button) => {
+    button.addEventListener('click', () => copyClientSubscription(button));
   });
 }
 
@@ -801,6 +880,7 @@ applyLanguage(currentLanguage);
 setupNodeTooltips();
 setupModeNavigation();
 setupHostGuideNavigation();
+setupClientPlatformNavigation();
 hydrateClientLinks();
 pingSubscriptionUrl();
 loadNodeMetadata().finally(loadSubscriptionNodes);

@@ -72,7 +72,6 @@
       <section class="import-panel" aria-labelledby="import-title">
         <div class="import-panel-heading">
           <div>
-            <p class="panel-kicker">Android</p>
             <h3 id="import-title">Nhập đăng ký</h3>
           </div>
         </div>
@@ -85,18 +84,65 @@
         </div>
         <div class="client-picker" aria-label="Client hỗ trợ nhập subscription">
           <div class="client-picker-header">
-            <p class="panel-kicker">Nhập vào app trên Android</p>
+            <div class="client-platform-tabs" role="tablist" aria-label="Chọn nền tảng ứng dụng">
+              <button id="platform-android" class="client-platform-tab is-selected" type="button" role="tab" aria-selected="true" aria-controls="client-platform-android" data-client-platform="android">Android</button>
+              <button id="platform-ios" class="client-platform-tab" type="button" role="tab" aria-selected="false" aria-controls="client-platform-ios" tabindex="-1" data-client-platform="ios">iOS</button>
+              <button id="platform-windows" class="client-platform-tab" type="button" role="tab" aria-selected="false" aria-controls="client-platform-windows" tabindex="-1" data-client-platform="windows">Windows</button>
+              <button id="platform-macos" class="client-platform-tab" type="button" role="tab" aria-selected="false" aria-controls="client-platform-macos" tabindex="-1" data-client-platform="macos">MacOS</button>
+            </div>
           </div>
-          <div class="client-grid">
-            <a class="client-tile" data-client="v2raytun" aria-label="Nhập vào v2RayTun"><img class="client-icon" src="./assets/apps/v2raytun.svg" alt="" /><span>v2RayTun</span></a>
-            <a class="client-tile" data-client="v2rayng" aria-label="Nhập vào v2rayNG"><img class="client-icon" src="./assets/apps/v2rayng.png" alt="" /><span>v2rayNG</span></a>
-            <a class="client-tile" data-client="clash" aria-label="Nhập vào Clash"><img class="client-icon" src="./assets/apps/clash.png" alt="" /><span>Clash</span></a>
-            <a class="client-tile" data-client="surfboard" aria-label="Nhập vào Surfboard"><img class="client-icon" src="./assets/apps/surfboard.svg" alt="" /><span>Surfboard</span></a>
-            <a class="client-tile" data-client="clashmeta" aria-label="Nhập vào Clash Meta"><img class="client-icon" src="./assets/apps/clashmeta.png" alt="" /><span>Clash Meta</span></a>
-            <a class="client-tile" data-client="nekobox" aria-label="Nhập vào NekoBox"><img class="client-icon" src="./assets/apps/nekobox.png" alt="" /><span>NekoBox</span></a>
-            <a class="client-tile" data-client="singbox" aria-label="Nhập vào sing-box"><img class="client-icon" src="./assets/apps/singbox.png" alt="" /><span>sing-box</span></a>
-            <a class="client-tile" data-client="hiddify" aria-label="Nhập vào Hiddify"><img class="client-icon" src="./assets/apps/hiddify.png" alt="" /><span>Hiddify</span></a>
-          </div>
+          <section id="client-platform-android" class="client-platform-panel" role="tabpanel" aria-labelledby="platform-android" data-client-platform-panel="android">
+            <h4 class="client-platform-title">Android</h4>
+            <div class="client-grid">
+              <a class="client-tile" data-client="v2raytun" aria-label="Nhập vào v2RayTun"><img class="client-icon" src="./assets/apps/v2raytun.svg" alt="" /><span>v2RayTun</span></a>
+              <a class="client-tile" data-client="v2rayng" aria-label="Nhập vào v2rayNG"><img class="client-icon" src="./assets/apps/v2rayng.png" alt="" /><span>v2rayNG</span></a>
+              <a class="client-tile" data-client="clash" aria-label="Nhập vào Clash"><img class="client-icon" src="./assets/apps/clash.png" alt="" /><span>Clash</span></a>
+              <a class="client-tile" data-client="surfboard" aria-label="Nhập vào Surfboard"><img class="client-icon" src="./assets/apps/surfboard.svg" alt="" /><span>Surfboard</span></a>
+              <a class="client-tile" data-client="clashmeta" aria-label="Nhập vào Clash Meta"><img class="client-icon" src="./assets/apps/clashmeta.png" alt="" /><span>Clash Meta</span></a>
+              <a class="client-tile" data-client="nekobox" aria-label="Nhập vào NekoBox"><img class="client-icon" src="./assets/apps/nekobox.png" alt="" /><span>NekoBox</span></a>
+              <a class="client-tile" data-client="singbox" aria-label="Nhập vào sing-box"><img class="client-icon" src="./assets/apps/singbox.png" alt="" /><span>sing-box</span></a>
+              <a class="client-tile" data-client="hiddify" aria-label="Nhập vào Hiddify"><img class="client-icon" src="./assets/apps/hiddify.png" alt="" /><span>Hiddify</span></a>
+            </div>
+          </section>
+
+          <section id="client-platform-ios" class="client-platform-panel" role="tabpanel" aria-labelledby="platform-ios" data-client-platform-panel="ios" hidden>
+            <h4 class="client-platform-title">iOS</h4>
+            <div class="client-grid">
+              <button class="client-tile" type="button" data-copy-client="Shadowrocket"><span class="client-icon client-mark client-mark-shadowrocket" aria-hidden="true">SR</span><span>Shadowrocket</span></button>
+              <button class="client-tile" type="button" data-copy-client="Streisand"><span class="client-icon client-mark client-mark-streisand" aria-hidden="true">ST</span><span>Streisand</span></button>
+              <button class="client-tile" type="button" data-copy-client="Stash"><span class="client-icon client-mark client-mark-stash" aria-hidden="true">S</span><span>Stash</span></button>
+              <button class="client-tile" type="button" data-copy-client="Quantumult X"><span class="client-icon client-mark client-mark-quantumult" aria-hidden="true">Q</span><span>Quantumult X</span></button>
+              <button class="client-tile" type="button" data-copy-client="Hiddify"><img class="client-icon" src="./assets/apps/hiddify.png" alt="" /><span>Hiddify</span></button>
+              <button class="client-tile" type="button" data-copy-client="sing-box"><img class="client-icon" src="./assets/apps/singbox.png" alt="" /><span>sing-box</span></button>
+              <button class="client-tile" type="button" data-copy-client="Loon"><span class="client-icon client-mark client-mark-loon" aria-hidden="true">L</span><span>Loon</span></button>
+              <button class="client-tile" type="button" data-copy-client="Clash Mi"><span class="client-icon client-mark client-mark-clashmi" aria-hidden="true">CM</span><span>Clash Mi</span></button>
+            </div>
+          </section>
+
+          <section id="client-platform-windows" class="client-platform-panel" role="tabpanel" aria-labelledby="platform-windows" data-client-platform-panel="windows" hidden>
+            <h4 class="client-platform-title">Windows</h4>
+            <div class="client-grid client-grid-compact">
+              <button class="client-tile" type="button" data-copy-client="v2rayN"><span class="client-icon client-mark client-mark-v2rayn" aria-hidden="true">V2</span><span>v2rayN</span></button>
+              <button class="client-tile" type="button" data-copy-client="Clash Verge Rev"><span class="client-icon client-mark client-mark-verge" aria-hidden="true">CV</span><span>Clash Verge</span></button>
+              <button class="client-tile" type="button" data-copy-client="Hiddify"><img class="client-icon" src="./assets/apps/hiddify.png" alt="" /><span>Hiddify</span></button>
+              <button class="client-tile" type="button" data-copy-client="NekoRay"><span class="client-icon client-mark client-mark-nekoray" aria-hidden="true">NR</span><span>NekoRay</span></button>
+              <button class="client-tile" type="button" data-copy-client="sing-box"><img class="client-icon" src="./assets/apps/singbox.png" alt="" /><span>sing-box</span></button>
+              <button class="client-tile" type="button" data-copy-client="Mihomo Party"><span class="client-icon client-mark client-mark-party" aria-hidden="true">MP</span><span>Mihomo Party</span></button>
+            </div>
+          </section>
+
+          <section id="client-platform-macos" class="client-platform-panel" role="tabpanel" aria-labelledby="platform-macos" data-client-platform-panel="macos" hidden>
+            <h4 class="client-platform-title">MacOS</h4>
+            <div class="client-grid client-grid-compact">
+              <button class="client-tile" type="button" data-copy-client="Clash Verge Rev"><span class="client-icon client-mark client-mark-verge" aria-hidden="true">CV</span><span>Clash Verge</span></button>
+              <button class="client-tile" type="button" data-copy-client="ClashX Meta"><span class="client-icon client-mark client-mark-clashx" aria-hidden="true">CX</span><span>ClashX Meta</span></button>
+              <button class="client-tile" type="button" data-copy-client="Hiddify"><img class="client-icon" src="./assets/apps/hiddify.png" alt="" /><span>Hiddify</span></button>
+              <button class="client-tile" type="button" data-copy-client="NekoRay"><span class="client-icon client-mark client-mark-nekoray" aria-hidden="true">NR</span><span>NekoRay</span></button>
+              <button class="client-tile" type="button" data-copy-client="sing-box"><img class="client-icon" src="./assets/apps/singbox.png" alt="" /><span>sing-box</span></button>
+              <button class="client-tile" type="button" data-copy-client="V2RayU"><span class="client-icon client-mark client-mark-v2rayu" aria-hidden="true">VU</span><span>V2RayU</span></button>
+            </div>
+          </section>
+          <p id="client-platform-status" class="client-platform-status" role="status" aria-live="polite"></p>
         </div>
       </section>
     </section>
