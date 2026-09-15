@@ -1,6 +1,6 @@
 const copyButton = document.getElementById('copy-subscription');
 const copyLabel = copyButton?.querySelector('[data-copy-label]');
-const subscriptionUrl = copyButton?.dataset.subscriptionUrl;
+const subscriptionUrlElement = document.getElementById('sub-url');
 const commandCopyButtons = document.querySelectorAll('[data-copy-command]');
 const setupModeButtons = document.querySelectorAll('[data-setup-mode]');
 const setupModeGuides = document.querySelectorAll('[data-setup-guide]');
@@ -226,6 +226,7 @@ let currentNodeState = 'loading';
 let currentNodeNames = [];
 let currentSubscriptionInfo = null;
 let currentNodeMetadata = new Map();
+let subscriptionUrl = '';
 const vietnameseContent = new WeakMap();
 const copyFeedbackTimers = new WeakMap();
 let clientStatusTimer;
@@ -711,13 +712,39 @@ function parseNodeMetadata(payload) {
   }, new Map());
 }
 
+function configureSubscriptionUrl(payload) {
+  const value = typeof payload?.subscription?.url === 'string'
+    ? payload.subscription.url.trim()
+    : '';
+
+  try {
+    const parsedUrl = new URL(value);
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) throw new Error('Unsupported protocol');
+    subscriptionUrl = parsedUrl.href;
+  } catch (error) {
+    subscriptionUrl = '';
+  }
+
+  if (subscriptionUrlElement) {
+    subscriptionUrlElement.textContent = subscriptionUrl || '--';
+  }
+
+  if (copyButton) {
+    copyButton.disabled = !subscriptionUrl;
+    copyButton.dataset.subscriptionUrl = subscriptionUrl;
+  }
+}
+
 async function loadNodeMetadata() {
   try {
     const response = await fetch(nodeMetadataUrl, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Metadata request failed: ${response.status}`);
 
-    currentNodeMetadata = parseNodeMetadata(await response.json());
+    const metadata = await response.json();
+    configureSubscriptionUrl(metadata);
+    currentNodeMetadata = parseNodeMetadata(metadata);
   } catch (error) {
+    configureSubscriptionUrl(null);
     currentNodeMetadata = new Map();
   }
 }
@@ -865,9 +892,7 @@ async function pingSubscriptionUrl() {
   }
 }
 
-if (copyButton && subscriptionUrl) {
-  copyButton.addEventListener('click', copySubscription);
-}
+copyButton?.addEventListener('click', copySubscription);
 
 commandCopyButtons.forEach((button) => {
   button.addEventListener('click', () => copySetupCommand(button));
@@ -881,8 +906,10 @@ setupNodeTooltips();
 setupModeNavigation();
 setupHostGuideNavigation();
 setupClientPlatformNavigation();
-hydrateClientLinks();
-pingSubscriptionUrl();
-loadNodeMetadata().finally(loadSubscriptionNodes);
+loadNodeMetadata().then(() => {
+  hydrateClientLinks();
+  pingSubscriptionUrl();
+  return loadSubscriptionNodes();
+});
 window.setInterval(pingSubscriptionUrl, 60000);
 window.setInterval(loadSubscriptionNodes, 300000);
