@@ -25,6 +25,7 @@ const requestTimeoutMs = 10000;
 const subscriptionName = 'VLESS 5G TikTok';
 const subscriptionDataUrl = '/subscription-source';
 const nodeMetadataUrl = './node-metadata.json';
+const signalUrlFrames = ['▂', '▂▃', '▂▃▄', '▂▃▄▅', '▃▄▅▆', '▄▅▆▇', '▅▆▇█', '▆▇██', '████'];
 const defaultDocumentTitle = document.title;
 const descriptionMeta = document.querySelector('meta[name="description"]');
 const defaultDescription = descriptionMeta?.content;
@@ -227,6 +228,7 @@ let currentNodeNames = [];
 let currentSubscriptionInfo = null;
 let currentNodeMetadata = new Map();
 let subscriptionUrl = '';
+let signalUrlStep = 0;
 const vietnameseContent = new WeakMap();
 const copyFeedbackTimers = new WeakMap();
 let clientStatusTimer;
@@ -234,6 +236,33 @@ let clientStatusTimer;
 function translate(key, ...args) {
   const value = localizedText[currentLanguage][key];
   return typeof value === 'function' ? value(...args) : value;
+}
+
+function updateSignalUrl() {
+  const isOnline = currentServerStatus === 'online';
+  const status = isOnline ? 'ONLINE' : currentServerStatus.toUpperCase();
+  const signal = isOnline
+    ? signalUrlFrames[signalUrlStep % signalUrlFrames.length]
+    : currentServerStatus === 'checking' ? '...' : '----';
+  const ping = 12 + (signalUrlStep % 7) * 3;
+  signalUrlStep += 1;
+
+  const currentUrl = new URL(window.location.href);
+  currentUrl.search = '';
+  currentUrl.searchParams.set('status', status);
+  currentUrl.searchParams.set('sig', signal);
+  currentUrl.searchParams.set('ping', `${ping}ms`);
+
+  try {
+    window.history.replaceState(null, '', `${currentUrl.pathname}?${currentUrl.searchParams}${currentUrl.hash}`);
+  } catch (error) {
+    // History API can be unavailable in embedded or restricted browsers.
+  }
+}
+
+function startSignalUrlAnimation() {
+  updateSignalUrl();
+  window.setInterval(updateSignalUrl, 500);
 }
 
 function applyStaticTranslations() {
@@ -864,6 +893,7 @@ function setStatus(state) {
   }
 
   statusText.textContent = translate(`status${state.charAt(0).toUpperCase()}${state.slice(1)}`);
+  updateSignalUrl();
 }
 
 async function pingSubscriptionUrl() {
@@ -906,6 +936,7 @@ setupNodeTooltips();
 setupModeNavigation();
 setupHostGuideNavigation();
 setupClientPlatformNavigation();
+startSignalUrlAnimation();
 loadNodeMetadata().then(() => {
   hydrateClientLinks();
   pingSubscriptionUrl();
