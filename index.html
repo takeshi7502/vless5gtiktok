@@ -278,7 +278,7 @@
               </section>
             </div>
 
-            <h3>Chọn cơ bản trong menu</h3>
+            <h3>Chọn mode trong menu</h3>
             <div class="setup-mode-grid" role="tablist" aria-label="Chọn chế độ cài đặt server">
               <button id="setup-mode-quick" class="setup-mode setup-mode-recommended is-selected" type="button" role="tab" aria-selected="true" aria-controls="setup-guide-quick" data-setup-mode="quick">
                 <span class="setup-mode-number">1</span>
@@ -290,14 +290,14 @@
               <button id="setup-mode-named" class="setup-mode" type="button" role="tab" aria-selected="false" aria-controls="setup-guide-named" tabindex="-1" data-setup-mode="named">
                 <span class="setup-mode-number">2</span>
                 <span>
-                  <strong>Named Tunnel</strong>
+                  <strong>Named Cloudflare Tunnel</strong>
                   <span class="setup-mode-description">Cần domain cố định; Cloudflare Zero Trust và tunnel token.</span>
                 </span>
               </button>
               <button id="setup-mode-direct" class="setup-mode" type="button" role="tab" aria-selected="false" aria-controls="setup-guide-direct" tabindex="-1" data-setup-mode="direct">
                 <span class="setup-mode-number">3</span>
                 <span>
-                  <strong>Direct DNS</strong>
+                  <strong>Direct Cloudflare</strong>
                   <span class="setup-mode-description">Cần domain cố định qua Cloudflare DNS proxy; cần origin ở cổng 80.</span>
                 </span>
               </button>
@@ -309,38 +309,38 @@
                 <p>Thử nhanh, không cần mua hay cấu hình domain.</p>
               </div>
               <ol class="setup-steps">
-                <li>Trong menu script, chọn <strong>1 - Quick Tunnel</strong>. Cloudflare sẽ cấp hostname <code>trycloudflare.com</code> tạm thời.</li>
-                <li>Ở UUID, nhấn <code>Enter</code> để script tự sinh. Chọn Fake SNI: <code>1</code> cho Free TikTok, <code>2</code> cho Free Vina Ko Nen, hoặc <code>3</code> cho cả hai.</li>
-                <li>Giữ path mặc định <code>/tiktok4g</code> hoặc tự đặt; sau đó chọn link cổng <code>80</code>, <code>443</code> hoặc cả hai và nhập mã quốc gia nếu cần.</li>
-                <li>Linux sẽ tạo service <code>xray-vless</code> và in link trong <code>frp_info.config</code>. Trên Termux, tiến trình chạy trực tiếp; nhấn <code>Ctrl+C</code> để dừng.</li>
+                <li>Trong menu script, chọn <strong>1 - Quick Tunnel</strong>. Cloudflare sẽ cấp hostname <code>*.trycloudflare.com</code> tạm thời.</li>
+                <li>UUID được tự sinh khi cài lần đầu. Chọn Fake SNI: <code>1</code> FreeTiktok, <code>2</code> FreeVina Ko Nen (<code>172.67.168.158</code>), hoặc <code>3</code> cả hai (mặc định).</li>
+                <li>Path cố định <code>/vless</code>; mode này chỉ dùng WebSocket. Chọn cổng link <code>1</code> cho 80, <code>2</code> cho TLS 443 (mặc định), hoặc <code>3</code> cho cả hai. Mã quốc gia là tùy chọn.</li>
+                <li>Linux tạo service <code>xray-vless</code>; các link VLESS được lưu trong <code>frp_info.config</code>, tên theo dạng <code>FreeTiktok WS</code>. Trên Termux, tiến trình chạy trực tiếp; nhấn <code>Ctrl+C</code> để dừng.</li>
               </ol>
-              <p class="setup-guide-callout"><strong>Lưu ý:</strong> hostname Quick Tunnel thay đổi sau mỗi lần khởi động lại, vì vậy link đăng ký cũ có thể không còn dùng được.</p>
+              <p class="setup-guide-callout"><strong>Lưu ý:</strong> hostname Quick Tunnel thay đổi khi tunnel khởi động lại, vì vậy các link VLESS cũ cần được cập nhật.</p>
             </section>
 
             <section id="setup-guide-named" class="setup-mode-guide" role="tabpanel" aria-labelledby="setup-mode-named" data-setup-guide="named" hidden>
               <div class="setup-guide-heading">
-                <h4>2 - Named Tunnel</h4>
+                <h4>2 - Named Cloudflare Tunnel</h4>
                 <p>Dùng domain cố định thông qua Cloudflare Zero Trust.</p>
               </div>
               <ol class="setup-steps">
                 <li>Trong Cloudflare Zero Trust, vào <strong>Networks → Tunnels</strong>, tạo tunnel loại <strong>Cloudflared</strong> rồi sao chép connector token.</li>
                 <li>Thêm <strong>Public Hostname</strong> cho domain muốn dùng, đặt service là <code>http://127.0.0.1:8888</code>.</li>
-                <li>Chọn <strong>2 - Named Tunnel</strong> trong script, nhập domain và token. Tiếp tục chọn Fake SNI, path, cổng link và mã quốc gia như nhu cầu.</li>
-                <li>Script chạy cloudflared kết nối ra ngoài, nên không cần tạo bản ghi A/AAAA trỏ về VPS hoặc mở cổng Xray public cho mode này.</li>
+                <li>Chọn <strong>2 - Named Cloudflare Tunnel</strong> trong script, nhập domain và token. UUID tự sinh, path cố định <code>/vless</code>. Chọn Fake SNI và transport: WebSocket, xHTTP hoặc cả hai (mặc định); nếu dùng xHTTP, chọn packet-up (mặc định), stream-up hoặc stream-one.</li>
+                <li>Chọn cổng link 80, TLS 443 (mặc định) hoặc cả hai; mã quốc gia là tùy chọn. Cloudflared kết nối ra ngoài nên không cần bản ghi A/AAAA trỏ về VPS hoặc mở cổng Xray public.</li>
               </ol>
-              <p class="setup-guide-callout"><strong>Phù hợp khi:</strong> cần một hostname ổn định để chia sẻ subscription mà không phải cập nhật lại sau mỗi lần restart.</p>
+              <p class="setup-guide-callout"><strong>Đầu ra:</strong> link VLESS được in ra và lưu trong <code>frp_info.config</code>, với tên như <code>FreeTiktok WS</code> hoặc <code>FreeVina Ko Nen XHTTP</code>. Script này không tạo link subscription.</p>
             </section>
 
             <section id="setup-guide-direct" class="setup-mode-guide" role="tabpanel" aria-labelledby="setup-mode-direct" data-setup-guide="direct" hidden>
               <div class="setup-guide-heading">
-                <h4>3 - Direct Cloudflare DNS</h4>
+                <h4>3 - Direct Cloudflare</h4>
                 <p>Dùng Cloudflare DNS proxy trực tiếp đến VPS.</p>
               </div>
               <ol class="setup-steps">
                 <li>Trong DNS của Cloudflare, tạo bản ghi <strong>A</strong> cho domain hoặc subdomain trỏ tới IP VPS và bật biểu tượng mây cam <strong>Proxied</strong>.</li>
                 <li>Ở <strong>SSL/TLS</strong>, chọn chế độ <strong>Flexible</strong> theo cấu hình mặc định của script.</li>
-                <li>Chọn <strong>3 - Direct DNS</strong>, nhập domain. Origin mặc định là <code>0.0.0.0:80</code>; tiếp tục chọn Fake SNI, path, cổng link và mã quốc gia.</li>
-                <li>Chỉ mở TCP <code>80</code> khi cần và nên giới hạn inbound theo dải IP Cloudflare. Kiểm tra lại DNS đã proxy trước khi import link.</li>
+                <li>Chọn <strong>3 - Direct Cloudflare</strong>, nhập domain. Origin mặc định nghe tại <code>0.0.0.0:80</code>; UUID tự sinh và path cố định <code>/vless</code>. Chọn Fake SNI và WebSocket, xHTTP hoặc cả hai (mặc định); nếu dùng xHTTP, chọn thêm xHTTP mode.</li>
+                <li>Chọn link cổng <code>2</code> cho TLS 443 qua Cloudflare; mode Direct không xuất link 80. Mã quốc gia là tùy chọn. Cho phép TCP <code>80</code> tới origin, nên giới hạn inbound theo dải IP Cloudflare và kiểm tra DNS đã bật proxy.</li>
               </ol>
               <p class="setup-guide-callout"><strong>Lưu ý bảo mật:</strong> với Flexible, đoạn Cloudflare đến VPS không mã hóa TLS. Chỉ dùng trên hạ tầng bạn quản trị và cân nhắc cấu hình TLS origin phù hợp khi cần.</p>
             </section>

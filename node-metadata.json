@@ -9,11 +9,11 @@
     { "sst": 4, "warp": 1, "adblock": 0, "note": "" },
     { "sst": 5, "warp": 1, "adblock": 0, "note": "" },
     { "sst": 6, "warp": 1, "adblock": 0, "note": "" },
-    { "sst": 7, "warp": 1, "adblock": 1, "note": "" },
-    { "sst": 8, "warp": 1, "adblock": 1, "note": "" },
-    { "sst": 9, "warp": 1, "adblock": 0, "note": "Hàng VN chất lượng " },
-    { "sst": 10, "warp": 0, "adblock": 0, "note": "trung bình" },
-    { "sst": 11, "warp": 0, "adblock": 0, "note": "xhttp" },
+    { "sst": 7, "warp": 1, "adblock": 0, "note": "" },
+    { "sst": 8, "warp": 1, "adblock": 0, "note": "" },
+    { "sst": 9, "warp": 1, "adblock": 0, "note": "" },
+    { "sst": 10, "warp": 1, "adblock": 0, "note": "" },
+    { "sst": 11, "warp": 0, "adblock": 0, "note": "" },
     { "sst": 12, "warp": 0, "adblock": 0, "note": "" }
   ]
 }
