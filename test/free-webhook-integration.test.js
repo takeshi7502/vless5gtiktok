@@ -76,8 +76,9 @@ test('admin policy issues #002 once and the bot returns its stable subscription'
     }
     if (url.hostname === 'panel.example') {
       const route = url.pathname.split('/panel/api/')[1];
-      if (route === 'inbounds/list') {
+      if (route === 'inbounds/options') {
         return apiResponse([
+          { id: 1, enable: true, protocol: 'vmess', remark: 'Takeshi.dev', port: 12345, settings: 'private' },
           { id: 7, enable: true, protocol: 'vless', remark: 'VLESS', port: 443 },
           { id: 8, enable: false, protocol: 'vless', remark: 'Disabled', port: 444 },
           { id: 9, enable: true, protocol: 'http', remark: 'HTTP', port: 445 },
@@ -116,10 +117,18 @@ test('admin policy issues #002 once and the bot returns its stable subscription'
     const saved = response();
     await adminHandler({ method: 'POST', headers, body: { action: 'save', policy: {
       ...DEFAULT_POLICY,
-      inboundIds: [7],
+      inboundIds: [1, 7],
       subscriptionBaseUrl: 'https://sub.example/sub/',
     } } }, saved);
     assert.equal(saved.statusCode, 200);
+    assert.deepEqual(saved.body.policy.inboundIds, [1, 7]);
+
+    const admin = response();
+    await adminHandler({ method: 'GET', headers }, admin);
+    assert.deepEqual(admin.body.inbounds, [
+      { id: 1, remark: 'Takeshi.dev', protocol: 'vmess', port: 12345 },
+      { id: 7, remark: 'VLESS', protocol: 'vless', port: 443 },
+    ]);
 
     const rejected = response();
     await adminHandler({ method: 'POST', headers, body: { action: 'save', policy: {
@@ -147,6 +156,7 @@ test('admin policy issues #002 once and the bot returns its stable subscription'
     assert.equal(creates, 1);
     assert.equal(clients.get('#002').client.group, 'free-web');
     assert.equal(clients.get('#002').client.tgId, 123456789);
+    assert.deepEqual(clients.get('#002').inboundIds, [1, 7]);
     assert.equal(messages.length, 2);
     assert.match(messages[0], /#002/);
     assert.match(messages[0], /https:\/\/sub\.example\/sub\/randomsub123/);

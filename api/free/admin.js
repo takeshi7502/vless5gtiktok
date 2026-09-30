@@ -60,8 +60,10 @@ async function adminData() {
 }
 
 async function availableInbounds(xui) {
-  return (await xui.listInbounds()).filter((inbound) =>
-    inbound.enable === true && inbound.protocol === 'vless');
+  return (await xui.listInboundChoices())
+    .filter((inbound) => inbound.enable === true &&
+      (inbound.protocol === 'vless' || inbound.protocol === 'vmess'))
+    .map(({ id, remark, protocol, port }) => ({ id, remark, protocol, port }));
 }
 
 module.exports = async (request, response) => {
