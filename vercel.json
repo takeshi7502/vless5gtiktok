@@ -2,8 +2,31 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/test",
+      "destination": "/test.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
       "source": "/subscription-source",
       "destination": "/api/subscription-source"
+    }
+  ],
+  "routes": [
+    { "src": "/lib/.*", "status": 404 },
+    { "src": "/test/.*", "status": 404 },
+    { "src": "/FREE_WEB\\.md", "status": 404 }
+  ],
+  "headers": [
+    {
+      "source": "/(test|admin)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/(test|admin).html",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     }
   ]
 }

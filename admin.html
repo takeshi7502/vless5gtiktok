@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#121416" />
+  <title>Quản trị cấp link | VLESS 5G TikTok</title>
+  <link rel="stylesheet" href="/admin.css" />
+  <script defer src="/admin.js"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="site-header">
+      <div>
+        <p class="eyebrow"><span class="pixel-spark" aria-hidden="true"></span> VLESS Gateway</p>
+        <p class="brand">Quản trị cấp link</p>
+      </div>
+      <div class="header-actions">
+        <a href="/test">Trang thử</a>
+        <button id="logout" class="text-button" type="button" hidden>Đăng xuất</button>
+      </div>
+    </header>
+
+    <p id="page-status" class="page-status" role="status" aria-live="polite">Đang kiểm tra phiên...</p>
+
+    <section id="login-section" class="section login-section" aria-labelledby="login-title" hidden>
+      <p class="section-label">Quản trị</p>
+      <h1 id="login-title">Đăng nhập</h1>
+      <form id="login-form">
+        <label for="password">Mật khẩu quản trị</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <button id="login-button" class="primary-button" type="submit">Đăng nhập</button>
+      </form>
+      <p id="login-status" class="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <div id="dashboard" hidden>
+      <section class="section overview" aria-labelledby="overview-title">
+        <p class="section-label">Tổng quan</p>
+        <h1 id="overview-title">Cấp link miễn phí</h1>
+        <div class="overview-row">
+          <p><strong id="issued-count">0</strong><span>client đã cấp</span></p>
+          <p id="config-status" class="config-status">Đang tải cấu hình</p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="policy-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-label">Client mới</p>
+            <h2 id="policy-title">Cấu hình cấp phát</h2>
+          </div>
+        </div>
+
+        <form id="policy-form">
+          <div class="field-grid">
+            <div class="field">
+              <label for="traffic-gb">Dung lượng (GB)</label>
+              <input id="traffic-gb" name="trafficGB" type="number" min="0" max="100000" step="0.01" required />
+            </div>
+            <div class="field">
+              <label for="hwid-limit">Giới hạn HWID</label>
+              <input id="hwid-limit" name="hwidLimit" type="number" min="0" max="100" step="1" required />
+            </div>
+            <div class="field">
+              <label for="expiry-mode">Hết hạn</label>
+              <select id="expiry-mode" name="expiryMode">
+                <option value="none">Không hết hạn</option>
+                <option value="days">Sau số ngày</option>
+                <option value="date">Ngày cố định</option>
+              </select>
+            </div>
+            <div class="field" id="expiry-days-field" hidden>
+              <label for="expiry-days">Số ngày</label>
+              <input id="expiry-days" name="expiryDays" type="number" min="1" max="3650" step="1" />
+            </div>
+            <div class="field" id="expiry-at-field" hidden>
+              <label for="expiry-at">Ngày và giờ hết hạn</label>
+              <input id="expiry-at" name="expiryAt" type="datetime-local" />
+            </div>
+            <div class="field">
+              <label for="client-group">Nhóm</label>
+              <input id="client-group" name="group" type="text" maxlength="64" value="free-web" required />
+            </div>
+            <div class="field full-width">
+              <label for="subscription-base-url">URL gốc subscription</label>
+              <input id="subscription-base-url" name="subscriptionBaseUrl" type="url" placeholder="https://vpn.example.com:2096/sub/" autocomplete="off" required />
+            </div>
+          </div>
+
+          <fieldset class="inbound-fieldset">
+            <legend>Inbound áp dụng</legend>
+            <div class="inbound-tools">
+              <button id="select-all" class="text-button" type="button">Chọn tất cả</button>
+              <button id="clear-all" class="text-button" type="button">Bỏ chọn</button>
+            </div>
+            <div id="inbound-list" class="inbound-list"></div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button id="save-policy" class="primary-button" type="submit">Lưu cấu hình</button>
+            <p id="policy-status" class="message" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+
+      <section class="section" aria-labelledby="sync-title">
+        <p class="section-label">Client đã cấp</p>
+        <h2 id="sync-title">Đồng bộ cấu hình</h2>
+        <div class="action-row">
+          <button id="sync-clients" class="secondary-button" type="button">Đồng bộ client</button>
+          <p id="sync-status" class="message" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="webhook-title">
+        <p class="section-label">Telegram</p>
+        <h2 id="webhook-title">Webhook bot</h2>
+        <div class="action-row">
+          <button id="register-webhook" class="secondary-button" type="button">Đăng ký webhook</button>
+          <p id="webhook-status" class="message" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
