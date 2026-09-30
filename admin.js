@@ -18,6 +18,9 @@ const saveButton = document.getElementById('save-policy');
 const policyStatus = document.getElementById('policy-status');
 const syncButton = document.getElementById('sync-clients');
 const syncStatus = document.getElementById('sync-status');
+const syncProgress = document.getElementById('sync-progress');
+const syncProgressBar = document.getElementById('sync-progress-bar');
+const syncProgressLabel = document.getElementById('sync-progress-label');
 const webhookButton = document.getElementById('register-webhook');
 const webhookStatus = document.getElementById('webhook-status');
 const configStatus = document.getElementById('config-status');
@@ -32,6 +35,16 @@ let syncing = false;
 function setMessage(element, message, kind = '') {
   element.textContent = message;
   element.dataset.kind = kind;
+}
+
+function setSyncProgress(processed, total, visible) {
+  syncProgress.hidden = !visible;
+  if (!visible) return;
+  const safeTotal = Number.isSafeInteger(total) && total > 0 ? total : 1;
+  const safeProcessed = Math.max(0, Math.min(Number(processed) || 0, safeTotal));
+  syncProgressBar.max = safeTotal;
+  syncProgressBar.value = safeProcessed;
+  syncProgressLabel.textContent = `${safeProcessed}/${total || 0} client`;
 }
 
 function showLogin() {
@@ -278,6 +291,7 @@ policyForm.addEventListener('submit', async (event) => {
     configStatus.textContent = 'Đã lưu cấu hình';
     updateSyncAvailability();
     setMessage(policyStatus, 'Đã lưu cấu hình.', 'success');
+    await syncClients({ automatic: true });
   } catch (error) {
     if (error.status === 401) showLogin();
     else setMessage(policyStatus, 'Không thể lưu cấu hình. Vui lòng kiểm tra dữ liệu và thử lại.', 'error');
@@ -287,13 +301,17 @@ policyForm.addEventListener('submit', async (event) => {
   }
 });
 
-syncButton.addEventListener('click', async () => {
+async function syncClients({ automatic = false } = {}) {
   syncing = true;
   updateSyncAvailability();
   saveButton.disabled = true;
-  setMessage(syncStatus, 'Đang đồng bộ...');
+  setMessage(syncStatus, automatic ? 'Đang áp dụng cấu hình mới...' : 'Đang đồng bộ...');
+  setSyncProgress(0, 0, true);
   let cursor;
   let batches = 0;
+  let processedTotal = 0;
+  let totalClients = 0;
+  let updatedTotal = 0;
   const failedEmails = new Set();
   try {
     while (true) {
@@ -303,8 +321,12 @@ syncButton.addEventListener('click', async () => {
       const errorCount = failedEmails.size;
       const processed = Number.isFinite(result.processed) ? result.processed : 0;
       const updated = Number.isFinite(result.updated) ? result.updated : 0;
+      processedTotal = processed;
+      totalClients = Number.isFinite(result.total) ? result.total : totalClients;
+      updatedTotal += updated;
+      setSyncProgress(processedTotal, totalClients, true);
       const total = Number.isFinite(result.total) ? `/${result.total}` : '';
-      setMessage(syncStatus, `Đợt ${batches}: ${processed}${total} đã kiểm tra, ${updated} cập nhật${errorCount ? `, ${errorCount} lỗi` : ''}.`);
+      setMessage(syncStatus, `Đợt ${batches}: ${processed}${total} đã kiểm tra, ${updatedTotal} cập nhật${errorCount ? `, ${errorCount} lỗi` : ''}.`);
       if (result.done === true) break;
       if (!result.cursor || result.cursor === cursor) throw new Error('Sync cursor did not advance');
       cursor = result.cursor;
@@ -321,7 +343,9 @@ syncButton.addEventListener('click', async () => {
     updateSyncAvailability();
     saveButton.disabled = !panelAvailable || !storageAvailable;
   }
-});
+}
+
+syncButton.addEventListener('click', () => { void syncClients(); });
 
 webhookButton.addEventListener('click', async () => {
   webhookButton.disabled = true;

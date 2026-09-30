@@ -148,3 +148,38 @@ test('sync reports per-client bulk errors even with a successful API envelope', 
   const result = await syncBatch(policy(), xui, 0, deps);
   assert.deepEqual(result.errors, ['#002']);
 });
+
+test('sync batches twenty clients with bounded panel concurrency', async () => {
+  const emails = Array.from({ length: 25 }, (_, index) => `#${String(index + 2).padStart(3, '0')}`);
+  const selectedPolicy = policy();
+  const fields = managedFields(selectedPolicy, 1000);
+  let active = 0;
+  let peak = 0;
+  const xui = {
+    getClient: async (email) => {
+      active++;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 2));
+      active--;
+      return {
+        client: { email, comment: 'free-web:self-service', ...fields },
+        inboundIds: [7, 8],
+      };
+    },
+  };
+  const deps = {
+    listIssuedEmails: async () => emails,
+    readIssuedAt: async () => 1000,
+  };
+
+  const first = await syncBatch(selectedPolicy, xui, 0, deps);
+  assert.equal(first.processed, 20);
+  assert.equal(first.done, false);
+  assert.ok(peak <= 4);
+
+  peak = 0;
+  const second = await syncBatch(selectedPolicy, xui, first.cursor, deps);
+  assert.equal(second.processed, 25);
+  assert.equal(second.done, true);
+  assert.ok(peak <= 4);
+});

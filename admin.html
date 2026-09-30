@@ -16,7 +16,7 @@
         <p class="brand">Quản trị cấp link</p>
       </div>
       <div class="header-actions">
-        <a href="/test">Trang thử</a>
+        <a href="/free">Trang cấp link</a>
         <button id="logout" class="text-button" type="button" hidden>Đăng xuất</button>
       </div>
     </header>
@@ -110,6 +110,10 @@
         <div class="action-row">
           <button id="sync-clients" class="secondary-button" type="button">Đồng bộ client</button>
           <p id="sync-status" class="message" role="status" aria-live="polite"></p>
+        </div>
+        <div id="sync-progress" class="sync-progress" hidden>
+          <progress id="sync-progress-bar" max="1" value="0">0%</progress>
+          <span id="sync-progress-label" class="message"></span>
         </div>
       </section>
 

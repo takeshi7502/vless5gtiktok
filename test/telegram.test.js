@@ -37,7 +37,7 @@ test('webhook secret is required and compared exactly', () => {
 
 test('parses private start commands and the numeric Telegram identity', () => {
   assert.deepEqual(parsePrivateStartUpdate(startUpdate()), {
-    updateId: '123', telegramUserId: '456', chatId: '456',
+    updateId: '123', telegramUserId: '456', chatId: '456', type: 'web', claimToken: null,
   });
   assert.deepEqual(parsePrivateStartUpdate(startUpdate({
     update_id: '124',
@@ -46,7 +46,16 @@ test('parses private start commands and the numeric Telegram identity', () => {
       chat: { type: 'private', id: '456' },
       from: { id: 456, is_bot: false },
     },
-  })), { updateId: '124', telegramUserId: '456', chatId: '456' });
+  })), { updateId: '124', telegramUserId: '456', chatId: '456', type: 'web', claimToken: null });
+
+  const token = 'AbCdEfGhIjKlMnOpQrStUvWxYz12';
+  assert.deepEqual(parsePrivateStartUpdate(startUpdate({ message: {
+    text: `/start c_${token}`,
+    chat: { type: 'private', id: 456 },
+    from: { id: 456, is_bot: false },
+  } })), {
+    updateId: '123', telegramUserId: '456', chatId: '456', type: 'claim', claimToken: token,
+  });
 });
 
 test('rejects nonprivate, malformed, and unrelated updates', () => {

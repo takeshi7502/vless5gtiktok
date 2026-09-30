@@ -4,6 +4,9 @@ const { authenticated, validPassword, sessionCookie, clearSessionCookie, sameOri
 const { DEFAULT_POLICY, validatePolicy } = require('../../lib/free-policy');
 const { syncBatch } = require('../../lib/free-sync');
 const { createXuiClient } = require('../../lib/xui');
+const { requestIp, retryHeaders } = require('../../lib/free-request');
+
+const LOGIN_LIMIT = Object.freeze({ limit: 8, windowSeconds: 15 * 60 });
 
 function adminReady() {
   return Boolean(process.env.FREE_ADMIN_SECRET && process.env.FREE_ADMIN_SECRET.length >= 32);
@@ -53,7 +56,7 @@ async function adminData() {
   data.policy = savedPolicy || DEFAULT_POLICY;
   try { validatePolicy(savedPolicy); data.configured = true; }
   catch { /* policy must be completed before self-service is enabled */ }
-  data.issuedCount = (await store.listIssuedEmails()).length;
+  data.issuedCount = await store.countIssuedEmails();
   try { data.inbounds = await availableInbounds(createXuiClient()); }
   catch { data.panelUnavailable = true; }
   return data;
@@ -80,6 +83,12 @@ module.exports = async (request, response) => {
   try { body = await readJson(request); }
   catch { return sendJson(response, 400, { error: 'Invalid request' }); }
   if (body.action === 'login') {
+    try {
+      const limit = await store.fixedWindowRateLimit('admin-login-ip', requestIp(request), LOGIN_LIMIT);
+      if (!limit.allowed) return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(limit));
+    } catch {
+      return sendJson(response, 503, { error: 'Login is temporarily unavailable' });
+    }
     if (!validPassword(body.password)) return sendJson(response, 401, { error: 'Invalid credentials' });
     return sendJson(response, 200, { authenticated: true }, { 'set-cookie': sessionCookie(request) });
   }

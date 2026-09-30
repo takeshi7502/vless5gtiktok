@@ -4,7 +4,8 @@ const botStatus = document.getElementById('bot-status');
 const statusMessage = document.getElementById('status-message');
 const botName = document.getElementById('bot-name');
 
-let botUrl = null;
+let botUsername = null;
+let ready = false;
 
 function setState(state, message) {
   botStatus.dataset.state = state;
@@ -15,7 +16,8 @@ function setState(state, message) {
 }
 
 async function loadBot() {
-  botUrl = null;
+  botUsername = null;
+  ready = false;
   setState('loading', 'Đang kiểm tra bot...');
 
   const controller = new AbortController();
@@ -32,12 +34,12 @@ async function loadBot() {
     const username = typeof data.botUsername === 'string'
       ? data.botUsername.trim().replace(/^@/, '')
       : '';
-
     if (data.ready !== true || !/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(username)) {
       throw new Error('Bot unavailable');
     }
 
-    botUrl = `https://t.me/${username}?start=free`;
+    botUsername = username;
+    ready = true;
     botName.textContent = `@${username}`;
     setState('ready', 'Bot đã sẵn sàng. Mở Telegram để tiếp tục.');
   } catch {
@@ -47,9 +49,30 @@ async function loadBot() {
   }
 }
 
-openBotButton.addEventListener('click', () => {
-  if (botUrl) window.location.assign(botUrl);
-});
+async function openBot() {
+  if (!ready || !botUsername) return;
+  openBotButton.disabled = true;
+  statusMessage.textContent = 'Đang tạo yêu cầu xác minh...';
+  try {
+    const response = await fetch('/api/free/claim', {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || typeof data.token !== 'string' || !/^[A-Za-z0-9_-]{24,64}$/.test(data.token)) {
+      throw new Error(response.status === 429 ? 'rate' : 'unavailable');
+    }
+    const username = typeof data.botUsername === 'string' ? data.botUsername : botUsername;
+    window.location.assign(`https://t.me/${username}?start=c_${data.token}`);
+  } catch (error) {
+    setState('ready', error.message === 'rate'
+      ? 'Bạn thao tác quá nhanh. Vui lòng thử lại sau.'
+      : 'Chưa thể tạo yêu cầu lúc này. Vui lòng thử lại sau.');
+  }
+}
+
+openBotButton.addEventListener('click', () => { void openBot(); });
 retryButton.addEventListener('click', loadBot);
 
 loadBot();
