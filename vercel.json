@@ -12,6 +12,10 @@
     {
       "source": "/subscription-source",
       "destination": "/api/subscription-source"
+    },
+    {
+      "source": "/free/sub/:subId",
+      "destination": "/api/free/subscription?subId=:subId"
     }
   ],
   "routes": [
