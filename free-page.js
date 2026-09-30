@@ -4,18 +4,27 @@ const botStatus = document.getElementById('bot-status');
 const statusMessage = document.getElementById('status-message');
 const botName = document.getElementById('bot-name');
 
+const FREE_SIGNUP_PAUSED = true;
+
 let botUsername = null;
 let ready = false;
 
 function setState(state, message) {
   botStatus.dataset.state = state;
   statusMessage.textContent = message;
-  openBotButton.disabled = state !== 'ready';
-  retryButton.hidden = state !== 'unavailable';
+  openBotButton.disabled = FREE_SIGNUP_PAUSED || state !== 'ready';
+  retryButton.hidden = FREE_SIGNUP_PAUSED || state !== 'unavailable';
   botName.hidden = state !== 'ready';
 }
 
 async function loadBot() {
+  if (FREE_SIGNUP_PAUSED) {
+    botUsername = null;
+    ready = false;
+    setState('unavailable', 'Tạm thời dừng cấp link miễn phí.');
+    return;
+  }
+
   botUsername = null;
   ready = false;
   setState('loading', 'Đang kiểm tra bot...');
@@ -50,7 +59,7 @@ async function loadBot() {
 }
 
 async function openBot() {
-  if (!ready || !botUsername) return;
+  if (FREE_SIGNUP_PAUSED || !ready || !botUsername) return;
   openBotButton.disabled = true;
   statusMessage.textContent = 'Đang tạo yêu cầu xác minh...';
   try {

@@ -91,6 +91,7 @@ h1 { margin: 8px 0 0; font-size: 32px; line-height: 1.2; }
 }
 .primary-button:hover:not(:disabled) { background: #c1f4d8; }
 .primary-button:disabled { border-color: var(--line); background: #39413f; color: var(--muted); cursor: not-allowed; }
+.primary-button.is-locked:disabled { border-color: #24282b; background: #080a0b; color: #6f7679; }
 .primary-button img { width: 18px; height: 18px; flex: 0 0 18px; }
 .primary-button:disabled img { opacity: .55; }
 .retry-button { padding: 8px 4px; border: 0; background: transparent; color: var(--gold); font-weight: 600; }
