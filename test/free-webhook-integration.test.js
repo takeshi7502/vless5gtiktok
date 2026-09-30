@@ -76,7 +76,7 @@ test('admin policy issues #002 once and the bot returns its stable subscription'
     }
     if (url.hostname === 'panel.example') {
       const route = url.pathname.split('/panel/api/')[1];
-      if (route === 'inbounds/options') {
+      if (route === 'inbounds/list') {
         return apiResponse([
           { id: 7, enable: true, protocol: 'vless', remark: 'VLESS', port: 443 },
           { id: 8, enable: false, protocol: 'vless', remark: 'Disabled', port: 444 },

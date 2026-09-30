@@ -23,8 +23,8 @@ test('keeps panel base path and sends the bearer token', async () => {
     return json({ success: true, obj: [{ id: 3, remark: 'VLESS' }] });
   });
 
-  assert.deepEqual(await xui.listInboundChoices(), [{ id: 3, remark: 'VLESS' }]);
-  assert.equal(calls[0].url, 'https://panel.example/xui/panel/api/inbounds/options');
+  assert.deepEqual(await xui.listInbounds(), [{ id: 3, remark: 'VLESS' }]);
+  assert.equal(calls[0].url, 'https://panel.example/xui/panel/api/inbounds/list');
   assert.equal(calls[0].options.method, 'GET');
   assert.equal(calls[0].options.headers.authorization, 'Bearer secret-token');
   assert.equal(calls[0].options.body, undefined);

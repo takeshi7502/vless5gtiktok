@@ -60,7 +60,7 @@ async function adminData() {
 }
 
 async function availableInbounds(xui) {
-  return (await xui.listInboundChoices()).filter((inbound) =>
+  return (await xui.listInbounds()).filter((inbound) =>
     inbound.enable === true && inbound.protocol === 'vless');
 }
 
