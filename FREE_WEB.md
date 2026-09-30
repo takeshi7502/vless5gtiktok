@@ -13,6 +13,8 @@ This separate step prevents a bot deep link copied from a normal start message f
 
 `#001` is reserved and the first generated email is `#002`. If the counter starts behind manually created numbered clients, saving the admin policy advances it to the highest existing number. The `#` is URL-encoded in panel API paths. A Telegram account is not proof of a unique human, and anyone who receives a subscription URL can redistribute it.
 
+If an administrator deliberately deletes a managed client in 3x-ui, the next valid `/free` claim for that Telegram account restores the same email (for example `#004`) with a new credential and a fresh expiry calculation. This happens only after 3x-ui explicitly reports that client as missing; authentication, network and timeout errors never trigger recreation.
+
 ## Safeguards and limits
 
 - `/api/free/claim`: 12 claim links per IP per 10 minutes, and 120 globally per 10 minutes.
