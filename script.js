@@ -855,13 +855,28 @@ function telegramDeepLink(claim) {
   return `https://t.me/${encodeURIComponent(claim.botUsername)}?start=c_${claim.token}`;
 }
 
+function openTelegramTab(url = 'about:blank') {
+  const telegramWindow = window.open(url, '_blank');
+  if (telegramWindow) telegramWindow.opener = null;
+  return telegramWindow;
+}
+
 async function requestTelegramVerification() {
   const existing = readStoredWebClaim();
   if (existing?.botUsername) {
-    window.location.assign(telegramDeepLink(existing));
+    if (!openTelegramTab(telegramDeepLink(existing))) {
+      await prepareVerification('Trình duyệt đã chặn tab Telegram. Hãy bật popup rồi thử lại.');
+    }
     return;
   }
   if (!botUsername || !verifyTelegramButton || verifyTelegramButton.disabled) return;
+
+  // Open during the click event so browsers do not block the later Telegram navigation.
+  const telegramWindow = openTelegramTab();
+  if (!telegramWindow) {
+    await prepareVerification('Trình duyệt đã chặn tab Telegram. Hãy bật popup rồi thử lại.');
+    return;
+  }
 
   setVerificationPresentation('loading', 'Đang tạo yêu cầu xác minh...');
   try {
@@ -886,8 +901,10 @@ async function requestTelegramVerification() {
     activeClaimToken = claim.token;
     scheduleClaimExpiry(claim);
     setVerificationPresentation('pending', 'Mở Telegram, nhấn Start tại bot. Khi bot báo xác minh thành công, quay lại trang này để nhận link riêng.');
-    window.location.assign(telegramDeepLink(claim));
+    telegramWindow.opener = null;
+    telegramWindow.location.replace(telegramDeepLink(claim));
   } catch (error) {
+    telegramWindow.close();
     await prepareVerification(error.message === 'rate'
       ? 'Bạn thao tác quá nhanh. Vui lòng thử lại sau.'
       : 'Chưa thể tạo yêu cầu xác minh. Vui lòng thử lại sau.');
