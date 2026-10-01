@@ -1,4 +1,7 @@
 {
+  "subscription": {
+    "url": ""
+  },
   "servers": [
     { "sst": 1, "warp": 1, "adblock": 1, "note": "Thông tin" },
     { "sst": 2, "warp": 0, "adblock": 0, "note": "" },

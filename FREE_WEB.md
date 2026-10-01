@@ -4,6 +4,10 @@ The main page is the public entry point. Its **Xác minh Telegram** button creat
 
 This separate step prevents a bot deep link copied from a normal start message from being used to provision clients. A web claim transitions from pending to claimed to ready, keeping only the result needed by the original browser session. The claim expires after five minutes. Telegram `update_id` values are recorded for seven days, so webhook retries and duplicate delivery do not repeat client creation or the bot response.
 
+## Static link mode
+
+The main page supports both sharing modes through `node-metadata.json`. Set `subscription.url` to one public HTTPS subscription URL to use the original static shared-link page; the Telegram panel is hidden and the browser does not call the free-link APIs. Leave `subscription.url` as an empty string to use Telegram verification and personal links. The static mode uses `/api/subscription-source` as a server-side proxy, so its node list can load without requiring CORS on the subscription host.
+
 ## Setup
 
 1. Create a separate Telegram bot. Rotate any bot or panel API token previously shared outside Vercel, then use `.env.example` as the list of Vercel Environment Variable names. Never put real values in that file or commit them. `XUI_API_TOKEN` needs 3x-ui admin scope. `XUI_ACCESS_URL` includes the panel's private base path; its HTTPS certificate must match the hostname (or IP SAN).

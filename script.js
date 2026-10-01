@@ -235,6 +235,8 @@ let currentNodeNames = [];
 let currentSubscriptionInfo = null;
 let currentNodeMetadata = new Map();
 let subscriptionUrl = '';
+let staticSubscriptionUrl = '';
+let isStaticSubscriptionMode = false;
 let botUsername = '';
 let activeClaimToken = '';
 let webClaimPollTimer;
@@ -730,15 +732,19 @@ function parseNodeMetadata(payload) {
   }, new Map());
 }
 
-function configureSubscriptionUrl(value) {
+function normalizeSubscriptionUrl(value) {
   try {
     const parsedUrl = new URL(typeof value === 'string' ? value.trim() : '');
     if (parsedUrl.protocol !== 'https:' || parsedUrl.username || parsedUrl.password ||
         parsedUrl.search || parsedUrl.hash) throw new Error('Unsupported protocol');
-    subscriptionUrl = parsedUrl.href;
+    return parsedUrl.href;
   } catch (error) {
-    subscriptionUrl = '';
+    return '';
   }
+}
+
+function configureSubscriptionUrl(value) {
+  subscriptionUrl = normalizeSubscriptionUrl(value);
 
   if (subscriptionUrlElement) {
     subscriptionUrlElement.textContent = subscriptionUrl || '--';
@@ -755,9 +761,14 @@ async function loadNodeMetadata() {
     const response = await fetch(nodeMetadataUrl, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Metadata request failed: ${response.status}`);
 
-    currentNodeMetadata = parseNodeMetadata(await response.json());
+    const metadata = await response.json();
+    currentNodeMetadata = parseNodeMetadata(metadata);
+    staticSubscriptionUrl = normalizeSubscriptionUrl(metadata?.subscription?.url);
+    isStaticSubscriptionMode = Boolean(staticSubscriptionUrl);
   } catch (error) {
     currentNodeMetadata = new Map();
+    staticSubscriptionUrl = '';
+    isStaticSubscriptionMode = false;
   }
 }
 
@@ -833,7 +844,20 @@ function activateSubscription(claim, result) {
   void loadSubscriptionNodes();
 }
 
+function activateStaticSubscription() {
+  clearWebClaim();
+  configureSubscriptionUrl(staticSubscriptionUrl);
+  subscriptionVerification?.setAttribute('hidden', '');
+  subscriptionAccess?.removeAttribute('hidden');
+  hydrateClientLinks();
+  currentNodeState = 'loading';
+  updateNodePresentation();
+  void pingSubscriptionUrl();
+  void loadSubscriptionNodes();
+}
+
 async function prepareVerification(message) {
+  if (isStaticSubscriptionMode) return;
   resetSubscriptionPresentation();
   setVerificationPresentation('loading', message || 'Đang kiểm tra bot Telegram...');
   try {
@@ -861,6 +885,7 @@ function openTelegramTab(url = 'about:blank') {
 }
 
 async function requestTelegramVerification() {
+  if (isStaticSubscriptionMode) return;
   const existing = readStoredWebClaim();
   if (existing?.botUsername) {
     if (!openTelegramTab(telegramDeepLink(existing))) {
@@ -917,6 +942,7 @@ function scheduleClaimPoll() {
 }
 
 async function refreshWebClaim() {
+  if (isStaticSubscriptionMode) return;
   const claim = readStoredWebClaim();
   if (!claim) {
     clearWebClaim();
@@ -964,7 +990,7 @@ async function refreshWebClaim() {
 }
 
 function refreshWebClaimOnReturn() {
-  if (document.visibilityState === 'visible' && readStoredWebClaim()) {
+  if (!isStaticSubscriptionMode && document.visibilityState === 'visible' && readStoredWebClaim()) {
     void refreshWebClaim();
   }
 }
@@ -1010,13 +1036,13 @@ function getNodeName(link, index) {
 }
 
 async function loadSubscriptionNodes() {
-  if (!subscriptionUrl || !validClaimToken(activeClaimToken)) return;
+  if (!subscriptionUrl || (!isStaticSubscriptionMode && !validClaimToken(activeClaimToken))) return;
 
   try {
-    const response = await fetch('/api/free/subscription', {
+    const response = await fetch(isStaticSubscriptionMode ? '/api/subscription-source' : '/api/free/subscription', {
       cache: 'no-store',
-      credentials: 'same-origin',
-      headers: { 'x-free-web-claim': activeClaimToken },
+      credentials: isStaticSubscriptionMode ? 'omit' : 'same-origin',
+      headers: isStaticSubscriptionMode ? undefined : { 'x-free-web-claim': activeClaimToken },
     });
 
     if (!response.ok) throw new Error(`Subscription returned ${response.status}`);
@@ -1131,6 +1157,10 @@ setupClientPlatformNavigation();
 window.addEventListener('focus', refreshWebClaimOnReturn);
 document.addEventListener('visibilitychange', refreshWebClaimOnReturn);
 loadNodeMetadata().then(() => {
+  if (isStaticSubscriptionMode) {
+    activateStaticSubscription();
+    return;
+  }
   return refreshWebClaim();
 });
 window.setInterval(pingSubscriptionUrl, 60000);
