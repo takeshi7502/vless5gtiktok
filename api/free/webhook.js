@@ -99,7 +99,7 @@ module.exports = async (request, response) => {
     webClaimToken = update.claimToken;
     const policy = validatePolicy(await store.readPolicy());
     const xui = createXuiClient({ subscriptionBaseUrl: policy.subscriptionBaseUrl });
-    const result = await provisionForTelegram(update.telegramUserId, policy, xui);
+    const result = await provisionForTelegram(update.telegramUserId, policy, xui, store, update.telegramUsername);
     await store.finishWebClaim(webClaimToken, { state: 'ready', email: result.email, url: result.url });
     const sent = await sendTelegramMessage(update.chatId, verifiedMessage());
     if (!sent.sent) throw new Error('Telegram delivery failed');
