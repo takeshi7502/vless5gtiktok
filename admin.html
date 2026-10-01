@@ -16,10 +16,13 @@
         <p class="brand">Quản trị cấp link</p>
       </div>
       <div class="header-actions">
+        <button id="register-webhook" class="secondary-button" type="button" title="Đăng ký webhook Telegram" hidden>Webhook bot</button>
         <a href="/free">Trang cấp link</a>
         <button id="logout" class="text-button" type="button" hidden>Đăng xuất</button>
       </div>
     </header>
+
+    <p id="webhook-status" class="message header-message" role="status" aria-live="polite"></p>
 
     <p id="page-status" class="page-status" role="status" aria-live="polite">Đang kiểm tra phiên...</p>
 
@@ -42,6 +45,7 @@
           <p><strong id="issued-count">0</strong><span>client đã cấp</span></p>
           <p id="config-status" class="config-status">Đang tải cấu hình</p>
         </div>
+        <p id="issued-status" class="message" role="status" aria-live="polite"></p>
       </section>
 
       <section class="section" aria-labelledby="policy-title">
@@ -88,42 +92,29 @@
             </div>
           </div>
 
-          <fieldset class="inbound-fieldset">
-            <legend>Inbound áp dụng</legend>
-            <div class="inbound-tools">
-              <button id="select-all" class="text-button" type="button">Chọn tất cả</button>
-              <button id="clear-all" class="text-button" type="button">Bỏ chọn</button>
-            </div>
-            <div id="inbound-list" class="inbound-list"></div>
-          </fieldset>
+          <details class="inbound-fieldset" open>
+            <summary>Inbound áp dụng <span id="inbound-count" class="inbound-count"></span></summary>
+            <fieldset class="inbound-options">
+              <legend class="visually-hidden">Chọn inbound áp dụng</legend>
+              <div class="inbound-tools">
+                <button id="select-all" class="text-button" type="button">Chọn tất cả</button>
+                <button id="clear-all" class="text-button" type="button">Bỏ chọn</button>
+              </div>
+              <div id="inbound-list" class="inbound-list"></div>
+            </fieldset>
+          </details>
 
           <div class="form-actions">
             <button id="save-policy" class="primary-button" type="submit">Lưu cấu hình</button>
-            <p id="policy-status" class="message" role="status" aria-live="polite"></p>
+            <button id="sync-clients" class="secondary-button" type="button">Đồng bộ client</button>
+          </div>
+          <p id="policy-status" class="message action-message" role="status" aria-live="polite"></p>
+          <p id="sync-status" class="message" role="status" aria-live="polite"></p>
+          <div id="sync-progress" class="sync-progress" hidden>
+            <progress id="sync-progress-bar" max="1" value="0">0%</progress>
+            <span id="sync-progress-label" class="message"></span>
           </div>
         </form>
-      </section>
-
-      <section class="section" aria-labelledby="sync-title">
-        <p class="section-label">Client đã cấp</p>
-        <h2 id="sync-title">Đồng bộ cấu hình</h2>
-        <div class="action-row">
-          <button id="sync-clients" class="secondary-button" type="button">Đồng bộ client</button>
-          <p id="sync-status" class="message" role="status" aria-live="polite"></p>
-        </div>
-        <div id="sync-progress" class="sync-progress" hidden>
-          <progress id="sync-progress-bar" max="1" value="0">0%</progress>
-          <span id="sync-progress-label" class="message"></span>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="webhook-title">
-        <p class="section-label">Telegram</p>
-        <h2 id="webhook-title">Webhook bot</h2>
-        <div class="action-row">
-          <button id="register-webhook" class="secondary-button" type="button">Đăng ký webhook</button>
-          <p id="webhook-status" class="message" role="status" aria-live="polite"></p>
-        </div>
       </section>
     </div>
   </main>

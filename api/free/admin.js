@@ -3,6 +3,7 @@ const { readJson, sendJson } = require('../../lib/free-http');
 const { authenticated, validPassword, sessionCookie, clearSessionCookie, sameOrigin } = require('../../lib/free-auth');
 const { DEFAULT_POLICY, validatePolicy } = require('../../lib/free-policy');
 const { syncBatch } = require('../../lib/free-sync');
+const { loadIssuedClients } = require('../../lib/free-registry');
 const { createXuiClient } = require('../../lib/xui');
 const { requestIp, retryHeaders } = require('../../lib/free-request');
 
@@ -45,7 +46,7 @@ async function adminData() {
     configured: false,
     policy: DEFAULT_POLICY,
     inbounds: [],
-    issuedCount: 0,
+    issuedCount: null,
     storageUnavailable: false,
   };
   if (!store.configured()) {
@@ -56,8 +57,12 @@ async function adminData() {
   data.policy = savedPolicy || DEFAULT_POLICY;
   try { validatePolicy(savedPolicy); data.configured = true; }
   catch { /* policy must be completed before self-service is enabled */ }
-  data.issuedCount = await store.countIssuedEmails();
-  try { data.inbounds = await availableInbounds(createXuiClient()); }
+  try {
+    const xui = createXuiClient();
+    const [inbounds, clients] = await Promise.all([availableInbounds(xui), loadIssuedClients(xui)]);
+    data.inbounds = inbounds;
+    data.issuedCount = clients.length;
+  }
   catch { data.panelUnavailable = true; }
   return data;
 }
@@ -112,7 +117,7 @@ module.exports = async (request, response) => {
         const email = row.client?.email || row.email;
         const match = /^#(\d{3,})$/.exec(email || '');
         return match ? Math.max(max, Number(match[1])) : max;
-      }, 1);
+      }, 0);
       await store.seedCounter(maxEmail);
       await store.savePolicy(policy);
       return sendJson(response, 200, { saved: true, policy });
@@ -120,7 +125,11 @@ module.exports = async (request, response) => {
     if (body.action === 'sync') {
       const policy = validatePolicy(await store.readPolicy());
       const cursor = body.cursor === undefined ? 0 : Number(body.cursor);
-      return sendJson(response, 200, await syncBatch(policy, createXuiClient(), cursor));
+      return sendJson(response, 200, await syncBatch(policy, createXuiClient(), cursor, store, body.afterEmail));
+    }
+    if (body.action === 'clientStatus') {
+      const clients = await loadIssuedClients(createXuiClient());
+      return sendJson(response, 200, { issuedCount: clients.length });
     }
     if (body.action === 'registerWebhook') {
       await registerWebhook();

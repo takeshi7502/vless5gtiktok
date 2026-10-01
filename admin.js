@@ -14,6 +14,7 @@ const expiryDaysInput = document.getElementById('expiry-days');
 const expiryAtField = document.getElementById('expiry-at-field');
 const expiryAtInput = document.getElementById('expiry-at');
 const inboundList = document.getElementById('inbound-list');
+const inboundCount = document.getElementById('inbound-count');
 const saveButton = document.getElementById('save-policy');
 const policyStatus = document.getElementById('policy-status');
 const syncButton = document.getElementById('sync-clients');
@@ -25,12 +26,14 @@ const webhookButton = document.getElementById('register-webhook');
 const webhookStatus = document.getElementById('webhook-status');
 const configStatus = document.getElementById('config-status');
 const issuedCount = document.getElementById('issued-count');
+const issuedStatus = document.getElementById('issued-status');
 
 let configured = false;
 let dirty = false;
 let panelAvailable = true;
 let storageAvailable = true;
 let syncing = false;
+let refreshingClients = false;
 
 function setMessage(element, message, kind = '') {
   element.textContent = message;
@@ -52,6 +55,8 @@ function showLogin() {
   loginSection.hidden = false;
   dashboard.hidden = true;
   logoutButton.hidden = true;
+  webhookButton.hidden = true;
+  setMessage(webhookStatus, '');
   configured = false;
   passwordInput.value = '';
 }
@@ -61,6 +66,7 @@ function showDashboard() {
   loginSection.hidden = true;
   dashboard.hidden = false;
   logoutButton.hidden = false;
+  webhookButton.hidden = false;
   passwordInput.value = '';
 }
 
@@ -68,6 +74,7 @@ function showUnavailable() {
   loginSection.hidden = true;
   dashboard.hidden = true;
   logoutButton.hidden = true;
+  webhookButton.hidden = true;
   pageStatus.hidden = false;
   pageStatus.textContent = 'Trang quản trị chưa sẵn sàng. Kiểm tra cấu hình máy chủ rồi tải lại trang.';
 }
@@ -121,9 +128,14 @@ function renderInbounds(inbounds, selectedIds) {
     empty.className = 'empty-inbounds';
     empty.textContent = 'Không tìm thấy inbound khả dụng.';
     inboundList.append(empty);
+    updateInboundCount();
     return;
   }
 
+  const columns = [document.createElement('div'), document.createElement('div')];
+  columns.forEach((column) => { column.className = 'inbound-column'; });
+  const splitAt = Math.ceil(inbounds.length / 2);
+  let index = 0;
   for (const inbound of inbounds) {
     const label = document.createElement('label');
     label.className = 'inbound-option';
@@ -138,7 +150,37 @@ function renderInbounds(inbounds, selectedIds) {
     details.textContent = `${inbound.protocol || 'unknown'} : ${inbound.port ?? '?'}`;
     text.append(details);
     label.append(checkbox, text);
-    inboundList.append(label);
+    columns[index++ < splitAt ? 0 : 1].append(label);
+  }
+  columns.filter((column) => column.childElementCount > 0).forEach((column) => inboundList.append(column));
+  updateInboundCount();
+}
+
+function updateInboundCount() {
+  const total = inboundList.querySelectorAll('input[type="checkbox"]').length;
+  const selected = inboundList.querySelectorAll('input[type="checkbox"]:checked').length;
+  inboundCount.textContent = `${selected}/${total} đã chọn`;
+}
+
+function updateIssuedCount(value) {
+  issuedCount.textContent = Number.isSafeInteger(value) && value >= 0 ? String(value) : '--';
+}
+
+async function refreshIssuedClients() {
+  if (dashboard.hidden || document.hidden || syncing || refreshingClients || !storageAvailable) return;
+  refreshingClients = true;
+  try {
+    const data = await request('POST', { action: 'clientStatus' });
+    updateIssuedCount(data.issuedCount);
+    setMessage(issuedStatus, '');
+  } catch (error) {
+    if (error.status === 401) showLogin();
+    else {
+      updateIssuedCount(null);
+      setMessage(issuedStatus, 'Chưa thể cập nhật số client từ panel.', 'error');
+    }
+  } finally {
+    refreshingClients = false;
   }
 }
 
@@ -169,9 +211,8 @@ function renderPolicy(data) {
       ? 'Không kết nối được 3x-ui. Kiểm tra URL, API token và chứng chỉ TLS.'
       : '';
   setMessage(policyStatus, setupError, setupError ? 'error' : '');
-  issuedCount.textContent = Number.isSafeInteger(data.issuedCount) && data.issuedCount >= 0
-    ? String(data.issuedCount)
-    : '0';
+  updateIssuedCount(data.issuedCount);
+  setMessage(issuedStatus, panelAvailable ? '' : 'Chưa thể cập nhật số client từ panel.', panelAvailable ? '' : 'error');
 }
 
 async function loadAdmin() {
@@ -222,6 +263,7 @@ logoutButton.addEventListener('click', async () => {
 expiryModeInput.addEventListener('change', updateExpiryFields);
 function markDirty() {
   dirty = true;
+  updateInboundCount();
   updateSyncAvailability();
   if (configured && panelAvailable && storageAvailable) {
     configStatus.dataset.ready = 'false';
@@ -308,6 +350,7 @@ async function syncClients({ automatic = false } = {}) {
   setMessage(syncStatus, automatic ? 'Đang áp dụng cấu hình mới...' : 'Đang đồng bộ...');
   setSyncProgress(0, 0, true);
   let cursor;
+  let afterEmail;
   let batches = 0;
   let processedTotal = 0;
   let totalClients = 0;
@@ -315,7 +358,11 @@ async function syncClients({ automatic = false } = {}) {
   const failedEmails = new Set();
   try {
     while (true) {
-      const result = await request('POST', { action: 'sync', ...(cursor ? { cursor } : {}) });
+      const result = await request('POST', {
+        action: 'sync',
+        ...(cursor ? { cursor } : {}),
+        ...(afterEmail ? { afterEmail } : {}),
+      });
       batches += 1;
       if (Array.isArray(result.errors)) result.errors.forEach((email) => failedEmails.add(email));
       const errorCount = failedEmails.size;
@@ -330,6 +377,7 @@ async function syncClients({ automatic = false } = {}) {
       if (result.done === true) break;
       if (!result.cursor || result.cursor === cursor) throw new Error('Sync cursor did not advance');
       cursor = result.cursor;
+      afterEmail = result.afterEmail;
     }
     const failures = [...failedEmails];
     const failedNames = failures.slice(0, 12).join(', ');
@@ -342,6 +390,7 @@ async function syncClients({ automatic = false } = {}) {
     syncing = false;
     updateSyncAvailability();
     saveButton.disabled = !panelAvailable || !storageAvailable;
+    await refreshIssuedClients();
   }
 }
 
@@ -362,3 +411,5 @@ webhookButton.addEventListener('click', async () => {
 });
 
 loadAdmin();
+setInterval(() => { void refreshIssuedClients(); }, 30000);
+document.addEventListener('visibilitychange', () => { void refreshIssuedClients(); });

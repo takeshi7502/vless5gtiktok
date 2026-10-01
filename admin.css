@@ -42,6 +42,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .brand { margin: 4px 0 0; font-size: 19px; font-weight: 750; line-height: 1.3; }
 .header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 16px; }
 .header-actions a, .text-button { color: var(--muted); font-size: 13px; }
+.header-actions .secondary-button { min-height: 36px; padding: 8px 12px; font-size: 13px; }
 .header-actions a { text-decoration-color: var(--mint-deep); text-underline-offset: 4px; }
 .header-actions a:hover, .text-button:hover { color: var(--text); }
 .text-button { padding: 4px 0; border: 0; background: transparent; text-decoration: underline; text-decoration-color: var(--mint-deep); text-underline-offset: 4px; }
@@ -86,6 +87,8 @@ input::placeholder { color: #8e999d; }
 .secondary-button:hover:not(:disabled) { border-color: var(--mint); }
 button:disabled { opacity: .55; cursor: not-allowed; }
 .message { min-height: 1.5em; margin: 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.message:empty { display: none; }
+.header-message, .action-message, #issued-status { margin-top: 12px; }
 .message[data-kind="error"] { color: var(--danger); }
 .message[data-kind="success"] { color: var(--mint); }
 #login-status { margin-top: 12px; }
@@ -97,28 +100,30 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .config-status { padding: 6px 10px; border: 1px solid var(--line); background: var(--surface); }
 .config-status[data-ready="true"] { border-color: var(--mint-deep); color: var(--mint); }
 .inbound-fieldset { min-width: 0; margin: 26px 0 0; padding: 0; border: 0; }
-.inbound-fieldset legend { margin-bottom: 2px; }
+.inbound-fieldset summary { padding: 6px 0; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; }
+.inbound-count { margin-left: 8px; color: var(--muted); font-weight: 400; }
+.inbound-options { min-width: 0; margin: 4px 0 0; padding: 0; border: 0; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .inbound-tools { display: flex; gap: 16px; margin-bottom: 10px; }
 .inbound-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.inbound-option { display: flex; min-width: 0; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--line-soft); background: var(--surface); cursor: pointer; }
+.inbound-column { display: grid; min-width: 0; align-content: start; gap: 8px; }
+.inbound-option { display: flex; min-width: 0; min-height: 60px; margin: 0; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--line-soft); background: var(--surface); cursor: pointer; }
 .inbound-option:hover { border-color: var(--mint-deep); }
 .inbound-option input { width: 16px; height: 16px; flex: 0 0 16px; margin: 2px 0 0; accent-color: var(--mint-deep); }
 .inbound-option span { min-width: 0; margin: 0; overflow-wrap: anywhere; font-weight: 400; }
 .inbound-option small { display: block; color: var(--muted); font: 12px/1.5 var(--mono); }
 .empty-inbounds { margin: 0; padding: 12px; border: 1px solid var(--line-soft); color: var(--muted); font-size: 13px; }
-.form-actions, .action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.form-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .form-actions { margin-top: 24px; }
-.action-row { margin-top: 18px; }
 .sync-progress { display: grid; grid-template-columns: minmax(0, 360px) auto; align-items: center; gap: 12px; margin-top: 12px; }
 .sync-progress progress { width: 100%; height: 10px; accent-color: var(--mint); }
 
 @media (max-width: 600px) {
   .page { width: min(100% - 32px, 900px); padding-top: 18px; }
-  .site-header { align-items: flex-start; }
+  .site-header { align-items: stretch; flex-direction: column; gap: 12px; }
   .brand { font-size: 17px; }
-  .header-actions { gap: 8px 14px; }
+  .header-actions { justify-content: flex-start; gap: 8px 14px; }
   .field-grid, .inbound-list { grid-template-columns: minmax(0, 1fr); }
-  .action-row { align-items: stretch; flex-direction: column; }
-  .action-row .secondary-button { align-self: flex-start; }
+  .form-actions button { padding-inline: 10px; font-size: 13px; }
   .sync-progress { grid-template-columns: minmax(0, 1fr); gap: 6px; }
 }
