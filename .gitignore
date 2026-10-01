@@ -8,5 +8,3 @@ coverage/
 *.log
 .DS_Store
 Thumbs.db
-gateway/free-gateway
-gateway/free-gateway.exe
