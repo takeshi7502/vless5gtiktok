@@ -82,8 +82,8 @@ module.exports = async (request, response) => {
     if (error.message === 'Telegram delivery failed') {
       return sendJson(response, 503, { error: 'Retry later' });
     }
-    const message = error.code === 'CLIENT_REMOVED'
-      ? 'Client của bạn đã bị xóa trên panel. Vui lòng liên hệ quản trị viên.'
+    const message = error.code === 'CLIENT_DISABLED'
+      ? 'Client của bạn hiện đã bị tắt. Vui lòng liên hệ quản trị viên.'
       : 'Chưa thể tạo hoặc lấy link lúc này. Vui lòng thử lại sau.';
     const sent = await sendTelegramMessage(update.chatId, message);
     return sendJson(response, sent.sent ? 200 : 503, { ok: false });
