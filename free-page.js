@@ -4,7 +4,7 @@ const botStatus = document.getElementById('bot-status');
 const statusMessage = document.getElementById('status-message');
 const botName = document.getElementById('bot-name');
 
-const FREE_SIGNUP_PAUSED = true;
+const FREE_SIGNUP_PAUSED = false;
 
 let botUsername = null;
 let ready = false;
