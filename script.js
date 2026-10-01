@@ -1,6 +1,11 @@
 const copyButton = document.getElementById('copy-subscription');
 const copyLabel = copyButton?.querySelector('[data-copy-label]');
 const subscriptionUrlElement = document.getElementById('sub-url');
+const subscriptionVerification = document.getElementById('subscription-verification');
+const subscriptionVerificationMessage = document.getElementById('subscription-verification-message');
+const verifyTelegramButton = document.getElementById('verify-telegram');
+const verifyTelegramLabel = document.getElementById('verify-telegram-label');
+const subscriptionAccess = document.getElementById('subscription-access');
 const commandCopyButtons = document.querySelectorAll('[data-copy-command]');
 const setupModeButtons = document.querySelectorAll('[data-setup-mode]');
 const setupModeGuides = document.querySelectorAll('[data-setup-guide]');
@@ -23,8 +28,9 @@ const nodeTooltipTriggers = document.querySelectorAll('.node-tooltip[data-toolti
 const nodeTooltipPopover = document.getElementById('node-tooltip-popover');
 const requestTimeoutMs = 10000;
 const subscriptionName = 'VLESS 5G TikTok';
-const subscriptionDataUrl = '/subscription-source';
 const nodeMetadataUrl = './node-metadata.json';
+const webClaimStorageKey = 'free-web:claim-v1';
+const webClaimLifetimeMs = 5 * 60 * 1000;
 const defaultDocumentTitle = document.title;
 const descriptionMeta = document.querySelector('meta[name="description"]');
 const defaultDescription = descriptionMeta?.content;
@@ -195,6 +201,7 @@ const localizedText = {
     clientCopied: (name) => `Đã sao chép link cho ${name}`,
     clientCopyRetry: 'Không sao chép được link. Thử lại.',
     nodesLoading: 'Đang tải...',
+    nodesLocked: 'Xác minh Telegram để xem',
     nodeLoadError: 'Không tải được',
     nodeCount: (count) => `${count} node`,
     nodeSummary: (count, names) => `${count} node: ${names.join(', ')}`,
@@ -209,6 +216,7 @@ const localizedText = {
     clientCopied: (name) => `Subscription copied for ${name}`,
     clientCopyRetry: 'Could not copy the subscription. Try again.',
     nodesLoading: 'Loading...',
+    nodesLocked: 'Verify Telegram to view',
     nodeLoadError: 'Unable to load',
     nodeCount: (count) => `${count} node${count === 1 ? '' : 's'}`,
     nodeSummary: (count, names) => `${count} node${count === 1 ? '' : 's'}: ${names.join(', ')}`,
@@ -222,11 +230,15 @@ const localizedText = {
 let isCheckingServer = false;
 let currentLanguage = 'vi';
 let currentServerStatus = 'checking';
-let currentNodeState = 'loading';
+let currentNodeState = 'locked';
 let currentNodeNames = [];
 let currentSubscriptionInfo = null;
 let currentNodeMetadata = new Map();
 let subscriptionUrl = '';
+let botUsername = '';
+let activeClaimToken = '';
+let webClaimPollTimer;
+let webClaimExpiryTimer;
 const vietnameseContent = new WeakMap();
 const copyFeedbackTimers = new WeakMap();
 let clientStatusTimer;
@@ -601,6 +613,10 @@ function updateNodePresentation() {
     serverNodes.textContent = translate('nodesLoading');
     serverNodes.removeAttribute('title');
     serverNodes.removeAttribute('aria-label');
+  } else if (currentNodeState === 'locked') {
+    serverNodes.textContent = translate('nodesLocked');
+    serverNodes.removeAttribute('title');
+    serverNodes.removeAttribute('aria-label');
   } else if (currentNodeState === 'error') {
     serverNodes.textContent = translate('nodeLoadError');
     serverNodes.removeAttribute('title');
@@ -619,7 +635,9 @@ function updateNodePresentation() {
     const cell = document.createElement('td');
     cell.className = 'node-empty';
     cell.colSpan = 5;
-    cell.textContent = translate(currentNodeState === 'loading' ? 'nodesLoading' : 'nodeLoadError');
+    cell.textContent = translate(currentNodeState === 'loading'
+      ? 'nodesLoading'
+      : currentNodeState === 'locked' ? 'nodesLocked' : 'nodeLoadError');
     row.append(cell);
     serverNodeList.replaceChildren(row);
     nodeTable?.removeAttribute('aria-label');
@@ -712,14 +730,11 @@ function parseNodeMetadata(payload) {
   }, new Map());
 }
 
-function configureSubscriptionUrl(payload) {
-  const value = typeof payload?.subscription?.url === 'string'
-    ? payload.subscription.url.trim()
-    : '';
-
+function configureSubscriptionUrl(value) {
   try {
-    const parsedUrl = new URL(value);
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) throw new Error('Unsupported protocol');
+    const parsedUrl = new URL(typeof value === 'string' ? value.trim() : '');
+    if (parsedUrl.protocol !== 'https:' || parsedUrl.username || parsedUrl.password ||
+        parsedUrl.search || parsedUrl.hash) throw new Error('Unsupported protocol');
     subscriptionUrl = parsedUrl.href;
   } catch (error) {
     subscriptionUrl = '';
@@ -740,12 +755,195 @@ async function loadNodeMetadata() {
     const response = await fetch(nodeMetadataUrl, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Metadata request failed: ${response.status}`);
 
-    const metadata = await response.json();
-    configureSubscriptionUrl(metadata);
-    currentNodeMetadata = parseNodeMetadata(metadata);
+    currentNodeMetadata = parseNodeMetadata(await response.json());
   } catch (error) {
-    configureSubscriptionUrl(null);
     currentNodeMetadata = new Map();
+  }
+}
+
+function validClaimToken(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{24,64}$/.test(value);
+}
+
+function readStoredWebClaim() {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(webClaimStorageKey) || 'null');
+    if (!validClaimToken(value?.token) || !Number.isFinite(value?.expiresAt) || value.expiresAt <= Date.now()) {
+      sessionStorage.removeItem(webClaimStorageKey);
+      return null;
+    }
+    return value;
+  } catch {
+    sessionStorage.removeItem(webClaimStorageKey);
+    return null;
+  }
+}
+
+function saveWebClaim(claim) {
+  sessionStorage.setItem(webClaimStorageKey, JSON.stringify(claim));
+}
+
+function clearWebClaim() {
+  activeClaimToken = '';
+  sessionStorage.removeItem(webClaimStorageKey);
+  window.clearTimeout(webClaimPollTimer);
+  window.clearTimeout(webClaimExpiryTimer);
+}
+
+function setVerificationPresentation(state, message) {
+  subscriptionVerification?.removeAttribute('hidden');
+  subscriptionAccess?.setAttribute('hidden', '');
+  if (subscriptionVerificationMessage) subscriptionVerificationMessage.textContent = message;
+  if (verifyTelegramButton) {
+    verifyTelegramButton.disabled = state === 'loading' || state === 'claimed' || state === 'disabled';
+    verifyTelegramButton.dataset.state = state;
+  }
+  if (verifyTelegramLabel) {
+    verifyTelegramLabel.textContent = state === 'pending' ? 'Mở lại bot Telegram' : 'Xác minh Telegram';
+  }
+}
+
+function resetSubscriptionPresentation() {
+  configureSubscriptionUrl('');
+  currentNodeState = 'locked';
+  currentNodeNames = [];
+  currentSubscriptionInfo = null;
+  updateNodePresentation();
+}
+
+function scheduleClaimExpiry(claim) {
+  window.clearTimeout(webClaimExpiryTimer);
+  const delay = Math.max(0, claim.expiresAt - Date.now());
+  webClaimExpiryTimer = window.setTimeout(() => {
+    clearWebClaim();
+    resetSubscriptionPresentation();
+    void prepareVerification('Phiên xác minh đã hết hạn. Hãy xác minh lại để nhận link riêng.');
+  }, delay);
+}
+
+function activateSubscription(claim, result) {
+  activeClaimToken = claim.token;
+  configureSubscriptionUrl(result.url);
+  subscriptionVerification?.setAttribute('hidden', '');
+  subscriptionAccess?.removeAttribute('hidden');
+  hydrateClientLinks();
+  currentNodeState = 'loading';
+  updateNodePresentation();
+  scheduleClaimExpiry(claim);
+  void pingSubscriptionUrl();
+  void loadSubscriptionNodes();
+}
+
+async function prepareVerification(message) {
+  resetSubscriptionPresentation();
+  setVerificationPresentation('loading', message || 'Đang kiểm tra bot Telegram...');
+  try {
+    const response = await fetch('/api/free/public', { cache: 'no-store' });
+    const data = await response.json().catch(() => ({}));
+    const username = typeof data.botUsername === 'string' ? data.botUsername.replace(/^@/, '').trim() : '';
+    if (!response.ok || data.ready !== true || !/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(username)) {
+      throw new Error('Bot unavailable');
+    }
+    botUsername = username;
+    setVerificationPresentation('ready', message || 'Liên kết Telegram để xác minh tài khoản và nhận link subscription riêng.');
+  } catch {
+    setVerificationPresentation('loading', 'Chưa thể kết nối bot lúc này. Vui lòng tải lại trang sau.');
+  }
+}
+
+function telegramDeepLink(claim) {
+  return `https://t.me/${encodeURIComponent(claim.botUsername)}?start=c_${claim.token}`;
+}
+
+async function requestTelegramVerification() {
+  const existing = readStoredWebClaim();
+  if (existing?.botUsername) {
+    window.location.assign(telegramDeepLink(existing));
+    return;
+  }
+  if (!botUsername || !verifyTelegramButton || verifyTelegramButton.disabled) return;
+
+  setVerificationPresentation('loading', 'Đang tạo yêu cầu xác minh...');
+  try {
+    const response = await fetch('/api/free/claim', {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const data = await response.json().catch(() => ({}));
+    const username = typeof data.botUsername === 'string' ? data.botUsername.replace(/^@/, '').trim() : '';
+    if (!response.ok || !validClaimToken(data.token) || !/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(username)) {
+      throw new Error(response.status === 429 ? 'rate' : 'unavailable');
+    }
+
+    const expiresIn = Number.isSafeInteger(data.expiresIn) ? data.expiresIn : webClaimLifetimeMs / 1000;
+    const claim = {
+      token: data.token,
+      botUsername: username,
+      expiresAt: Date.now() + Math.min(webClaimLifetimeMs, Math.max(60, expiresIn) * 1000),
+    };
+    saveWebClaim(claim);
+    activeClaimToken = claim.token;
+    scheduleClaimExpiry(claim);
+    setVerificationPresentation('pending', 'Mở Telegram, nhấn Start tại bot. Khi bot báo xác minh thành công, quay lại trang này để nhận link riêng.');
+    window.location.assign(telegramDeepLink(claim));
+  } catch (error) {
+    await prepareVerification(error.message === 'rate'
+      ? 'Bạn thao tác quá nhanh. Vui lòng thử lại sau.'
+      : 'Chưa thể tạo yêu cầu xác minh. Vui lòng thử lại sau.');
+  }
+}
+
+function scheduleClaimPoll() {
+  window.clearTimeout(webClaimPollTimer);
+  if (!readStoredWebClaim()) return;
+  webClaimPollTimer = window.setTimeout(() => { void refreshWebClaim(); }, 2000);
+}
+
+async function refreshWebClaim() {
+  const claim = readStoredWebClaim();
+  if (!claim) {
+    clearWebClaim();
+    await prepareVerification();
+    return;
+  }
+
+  activeClaimToken = claim.token;
+  scheduleClaimExpiry(claim);
+  try {
+    const response = await fetch('/api/free/claim', {
+      cache: 'no-store',
+      headers: { 'x-free-web-claim': claim.token },
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || typeof result.state !== 'string') throw new Error('Claim unavailable');
+
+    if (result.state === 'ready' && typeof result.url === 'string') {
+      activateSubscription(claim, result);
+      return;
+    }
+    if (result.state === 'pending') {
+      setVerificationPresentation('pending', 'Mở Telegram, nhấn Start tại bot. Khi bot báo xác minh thành công, quay lại trang này để nhận link riêng.');
+      scheduleClaimPoll();
+      return;
+    }
+    if (result.state === 'claimed') {
+      setVerificationPresentation('claimed', 'Bot đang xác minh tài khoản và tạo link riêng của bạn...');
+      scheduleClaimPoll();
+      return;
+    }
+    clearWebClaim();
+    resetSubscriptionPresentation();
+    if (result.state === 'disabled') {
+      setVerificationPresentation('disabled', 'Client của bạn hiện đã bị tắt. Vui lòng liên hệ quản trị viên.');
+      return;
+    }
+    await prepareVerification(result.state === 'failed'
+      ? 'Chưa thể xác minh hoặc tạo link. Vui lòng thử lại sau.'
+      : 'Yêu cầu xác minh đã hết hạn. Hãy xác minh lại để nhận link riêng.');
+  } catch {
+    setVerificationPresentation('pending', 'Đang chờ xác minh. Quay lại sau khi bot báo xác minh thành công.');
+    scheduleClaimPoll();
   }
 }
 
@@ -790,12 +988,13 @@ function getNodeName(link, index) {
 }
 
 async function loadSubscriptionNodes() {
-  if (!subscriptionUrl) return;
+  if (!subscriptionUrl || !validClaimToken(activeClaimToken)) return;
 
   try {
-    const response = await fetch(subscriptionDataUrl, {
+    const response = await fetch('/api/free/subscription', {
       cache: 'no-store',
-      credentials: 'omit',
+      credentials: 'same-origin',
+      headers: { 'x-free-web-claim': activeClaimToken },
     });
 
     if (!response.ok) throw new Error(`Subscription returned ${response.status}`);
@@ -893,6 +1092,7 @@ async function pingSubscriptionUrl() {
 }
 
 copyButton?.addEventListener('click', copySubscription);
+verifyTelegramButton?.addEventListener('click', () => { void requestTelegramVerification(); });
 
 commandCopyButtons.forEach((button) => {
   button.addEventListener('click', () => copySetupCommand(button));
@@ -907,9 +1107,7 @@ setupModeNavigation();
 setupHostGuideNavigation();
 setupClientPlatformNavigation();
 loadNodeMetadata().then(() => {
-  hydrateClientLinks();
-  pingSubscriptionUrl();
-  return loadSubscriptionNodes();
+  return refreshWebClaim();
 });
 window.setInterval(pingSubscriptionUrl, 60000);
 window.setInterval(loadSubscriptionNodes, 300000);

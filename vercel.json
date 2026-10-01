@@ -3,15 +3,11 @@
   "rewrites": [
     {
       "source": "/free",
-      "destination": "/free.html"
+      "destination": "/index.html"
     },
     {
       "source": "/admin",
       "destination": "/admin.html"
-    },
-    {
-      "source": "/subscription-source",
-      "destination": "/api/subscription-source"
     }
   ],
   "routes": [

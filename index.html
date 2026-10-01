@@ -8,7 +8,7 @@
   <meta name="description" content="Máy chủ thử nghiệm VLESS cho 4G/5G nền TikTok miễn phí." />
   <link rel="icon" type="image/jpeg" href="https://sf-static.upanhlaylink.com/img/image_2026070608e9764ab8c801c692150da94c52a4a4.jpg" />
   <link rel="apple-touch-icon" href="https://sf-static.upanhlaylink.com/img/image_20260706d251203081bd2fb50d8bad298b7cb2cf.jpg" />
-  <link rel="stylesheet" href="./styles.css?v=20260907-9" />
+  <link rel="stylesheet" href="./styles.css?v=20261001-1" />
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>
@@ -75,14 +75,22 @@
             <h3 id="import-title">Nhập đăng ký</h3>
           </div>
         </div>
-        <div class="subscription-row">
+        <div id="subscription-verification" class="subscription-verification">
+          <p id="subscription-verification-message" role="status" aria-live="polite">Liên kết Telegram để xác minh tài khoản và nhận link subscription riêng.</p>
+          <button id="verify-telegram" class="verify-telegram-button" type="button" disabled>
+            <span class="ui-icon icon-link" aria-hidden="true"></span>
+            <span id="verify-telegram-label">Xác minh Telegram</span>
+          </button>
+        </div>
+        <div id="subscription-access" hidden>
+          <div class="subscription-row">
           <code id="sub-url" class="subscription-url">Đang tải link...</code>
           <button id="copy-subscription" class="copy-url-button" type="button" aria-label="Sao chép link đăng ký" title="Sao chép link đăng ký" disabled>
             <span class="ui-icon icon-copy" aria-hidden="true"></span>
             <span class="copy-feedback" data-copy-label role="status">COPY URL</span>
           </button>
         </div>
-        <div class="client-picker" aria-label="Client hỗ trợ nhập subscription">
+          <div class="client-picker" aria-label="Client hỗ trợ nhập subscription">
           <div class="client-picker-header">
             <div class="client-platform-tabs" role="tablist" aria-label="Chọn nền tảng ứng dụng">
               <button id="platform-android" class="client-platform-tab is-selected" type="button" role="tab" aria-selected="true" aria-controls="client-platform-android" data-client-platform="android">Android</button>
@@ -143,6 +151,7 @@
             </div>
           </section>
           <p id="client-platform-status" class="client-platform-status" role="status" aria-live="polite"></p>
+        </div>
         </div>
       </section>
     </section>
@@ -485,6 +494,6 @@
 
   <div id="node-tooltip-popover" class="node-tooltip-popover" role="tooltip" hidden></div>
 
-  <script src="./script.js?v=20260930-1"></script>
+  <script src="./script.js?v=20261001-1"></script>
 </body>
 </html>

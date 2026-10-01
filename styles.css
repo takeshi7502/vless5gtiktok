@@ -177,6 +177,13 @@ img { max-width: 100%; }
 .import-panel-heading > div { display: flex; align-items: baseline; gap: 10px; }
 .import-panel-heading .panel-kicker { order: 1; padding-left: 10px; border-left: 1px solid var(--line); color: var(--muted); font-size: 10px; }
 .import-panel-heading h3 { margin: 0; font-size: 14px; font-weight: 650; }
+.subscription-verification { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 4px; background: #141b18; }
+.subscription-verification p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.verify-telegram-button { display: inline-flex; min-height: 38px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--mint); border-radius: 4px; background: var(--mint); color: #142a21; font: inherit; font-size: 12px; font-weight: 700; line-height: 1; cursor: pointer; box-shadow: 2px 2px 0 var(--shadow); transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
+.verify-telegram-button:hover:not(:disabled) { background: #b5f4d7; transform: translateY(-2px); box-shadow: 3px 3px 0 var(--shadow); }
+.verify-telegram-button:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: none; }
+.verify-telegram-button:disabled { cursor: wait; opacity: 0.58; }
+.icon-link { --icon: url("./assets/icons/link.svg"); }
 .subscription-row { display: flex; min-width: 0; align-items: stretch; gap: 10px; }
 .subscription-url {
   display: flex;
@@ -561,6 +568,8 @@ td:nth-child(3) strong { color: #d6e7bb; }
   .node-expiry { margin-left: 0; padding-left: 8px; }
   .node-table { min-width: 590px; font-size: 11px; }
   .node-table th, .node-table td { padding: 9px 10px; }
+  .subscription-verification { align-items: stretch; flex-direction: column; gap: 10px; }
+  .verify-telegram-button { width: 100%; }
   .subscription-row { gap: 8px; }
   .subscription-url { padding: 10px; font-size: 11px; }
   .copy-url-button { width: 40px; flex-basis: 40px; }
