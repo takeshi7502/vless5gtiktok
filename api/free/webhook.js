@@ -5,6 +5,7 @@ const { subscriptionUrl, validatePolicy } = require('../../lib/free-policy');
 const { createXuiClient } = require('../../lib/xui');
 const { findIssuedClient, provisionForTelegram } = require('../../lib/free-provision');
 const { testPageUrl } = require('../../lib/free-service');
+const { clientUsage, dataMessage: usageDataMessage } = require('../../lib/free-usage');
 const {
   isTelegramWebhookSecretValid,
   parsePrivateStartUpdate,
@@ -14,6 +15,8 @@ const {
 const START_LIMIT = Object.freeze({ limit: 2, windowSeconds: 5 * 60 });
 const START_GLOBAL_LIMIT = Object.freeze({ limit: 120, windowSeconds: 5 * 60 });
 const CLAIM_LIMIT = Object.freeze({ limit: 6, windowSeconds: 10 * 60 });
+const DATA_LIMIT = Object.freeze({ limit: 2, windowSeconds: 60 });
+const DATA_GLOBAL_LIMIT = Object.freeze({ limit: 120, windowSeconds: 60 });
 
 function startMessage() {
   const url = testPageUrl();
@@ -27,11 +30,11 @@ function disabledMessage() {
 }
 
 function verifiedMessage() {
-  return 'Bạn đã xác minh thành công. Quay lại trang web để nhận link subscription riêng. Bạn cũng có thể dùng /start để bot gửi lại link bất cứ lúc nào.';
+  return 'Bạn đã xác minh thành công. Quay lại trang web để nhận link subscription riêng. Bạn cũng có thể dùng /start để bot gửi lại link và /data để kiểm tra dung lượng.';
 }
 
 function subscriptionMessage(result) {
-  return `Link subscription của bạn (${result.email}):\n${result.url}`;
+  return `Link subscription của bạn (${result.email}):\n${result.url}\n\nDùng /data để kiểm tra dung lượng.`;
 }
 
 async function existingSubscription(telegramUserId) {
@@ -48,6 +51,15 @@ async function existingSubscription(telegramUserId) {
     email: row.client.email,
     url: subscriptionUrl(policy, row.client.subId),
   };
+}
+
+async function dataForTelegram(telegramUserId) {
+  const policy = validatePolicy(await store.readPolicy());
+  const xui = createXuiClient({ subscriptionBaseUrl: policy.subscriptionBaseUrl });
+  const { row } = await findIssuedClient(telegramUserId, xui);
+  if (!row) return startMessage();
+  if (row.client.enable === false) return disabledMessage();
+  return usageDataMessage(clientUsage(row));
 }
 
 module.exports = async (request, response) => {
@@ -69,6 +81,17 @@ module.exports = async (request, response) => {
       updateClaimId = randomUUID();
       const claimed = await store.claimWebhookUpdate(update.updateId, updateClaimId);
       if (!claimed) return sendJson(response, 200, { ok: true });
+    }
+
+    if (update.type === 'data') {
+      const limit = await store.fixedWindowRateLimit('bot-data-user', update.telegramUserId, DATA_LIMIT);
+      const globalLimit = await store.fixedWindowRateLimit('bot-data-global', 'all', DATA_GLOBAL_LIMIT);
+      if (limit.allowed && globalLimit.allowed) {
+        const sent = await sendTelegramMessage(update.chatId, await dataForTelegram(update.telegramUserId));
+        if (!sent.sent) throw new Error('Telegram delivery failed');
+      }
+      if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
+      return sendJson(response, 200, { ok: true });
     }
 
     if (update.type !== 'claim') {
@@ -99,7 +122,14 @@ module.exports = async (request, response) => {
     webClaimToken = update.claimToken;
     const policy = validatePolicy(await store.readPolicy());
     const xui = createXuiClient({ subscriptionBaseUrl: policy.subscriptionBaseUrl });
-    const result = await provisionForTelegram(update.telegramUserId, policy, xui, store, update.telegramUsername);
+    const result = await provisionForTelegram(
+      update.telegramUserId,
+      policy,
+      xui,
+      store,
+      update.telegramUsername,
+      update.telegramDisplayName,
+    );
     await store.finishWebClaim(webClaimToken, { state: 'ready', email: result.email, url: result.url });
     const sent = await sendTelegramMessage(update.chatId, verifiedMessage());
     if (!sent.sent) throw new Error('Telegram delivery failed');

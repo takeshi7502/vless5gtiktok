@@ -10,6 +10,17 @@
       "destination": "/admin.html"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/free/usage-alerts",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "functions": {
+    "api/free/usage-alerts.js": {
+      "maxDuration": 60
+    }
+  },
   "routes": [
     { "src": "/lib/.*", "status": 404 },
     { "src": "/test/.*", "status": 404 },
