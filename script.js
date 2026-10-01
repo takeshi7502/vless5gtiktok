@@ -816,8 +816,7 @@ function scheduleClaimExpiry(claim) {
   const delay = Math.max(0, claim.expiresAt - Date.now());
   webClaimExpiryTimer = window.setTimeout(() => {
     clearWebClaim();
-    resetSubscriptionPresentation();
-    void prepareVerification('Phiên xác minh đã hết hạn. Hãy xác minh lại để nhận link riêng.');
+    void prepareVerification();
   }, delay);
 }
 
@@ -957,10 +956,16 @@ async function refreshWebClaim() {
     }
     await prepareVerification(result.state === 'failed'
       ? 'Chưa thể xác minh hoặc tạo link. Vui lòng thử lại sau.'
-      : 'Yêu cầu xác minh đã hết hạn. Hãy xác minh lại để nhận link riêng.');
+      : undefined);
   } catch {
     setVerificationPresentation('pending', 'Đang chờ xác minh. Quay lại sau khi bot báo xác minh thành công.');
     scheduleClaimPoll();
+  }
+}
+
+function refreshWebClaimOnReturn() {
+  if (document.visibilityState === 'visible' && readStoredWebClaim()) {
+    void refreshWebClaim();
   }
 }
 
@@ -1123,6 +1128,8 @@ setupNodeTooltips();
 setupModeNavigation();
 setupHostGuideNavigation();
 setupClientPlatformNavigation();
+window.addEventListener('focus', refreshWebClaimOnReturn);
+document.addEventListener('visibilitychange', refreshWebClaimOnReturn);
 loadNodeMetadata().then(() => {
   return refreshWebClaim();
 });

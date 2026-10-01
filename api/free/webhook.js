@@ -27,7 +27,7 @@ function disabledMessage() {
 }
 
 function verifiedMessage() {
-  return 'Bạn đã xác minh thành công. Hãy quay lại trang web để nhận link subscription riêng và chọn ứng dụng để nhập cấu hình.';
+  return 'Bạn đã xác minh thành công. Quay lại trang web để nhận link subscription riêng. Bạn cũng có thể dùng /start để bot gửi lại link bất cứ lúc nào.';
 }
 
 function subscriptionMessage(result) {
