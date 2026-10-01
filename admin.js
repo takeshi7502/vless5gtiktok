@@ -8,11 +8,13 @@ const loginButton = document.getElementById('login-button');
 const loginStatus = document.getElementById('login-status');
 const logoutButton = document.getElementById('logout');
 const policyForm = document.getElementById('policy-form');
-const expiryModeInput = document.getElementById('expiry-mode');
-const expiryDaysField = document.getElementById('expiry-days-field');
 const expiryDaysInput = document.getElementById('expiry-days');
-const expiryAtField = document.getElementById('expiry-at-field');
 const expiryAtInput = document.getElementById('expiry-at');
+const expiryLabel = document.getElementById('expiry-label');
+const legacyExpiryModeInput = document.getElementById('legacy-expiry-mode');
+const firstUseInput = document.getElementById('first-use');
+const trafficResetInput = document.getElementById('traffic-reset');
+const monthlyResetDayInput = document.getElementById('monthly-reset-day');
 const inboundList = document.getElementById('inbound-list');
 const inboundCount = document.getElementById('inbound-count');
 const saveButton = document.getElementById('save-policy');
@@ -34,6 +36,7 @@ let panelAvailable = true;
 let storageAvailable = true;
 let syncing = false;
 let refreshingClients = false;
+let legacyExpiryDays = false;
 
 function setMessage(element, message, kind = '') {
   element.textContent = message;
@@ -103,13 +106,21 @@ async function request(method = 'GET', body) {
 }
 
 function updateExpiryFields() {
-  const mode = expiryModeInput.value;
-  expiryDaysField.hidden = mode !== 'days';
-  expiryDaysInput.required = mode === 'days';
-  expiryDaysInput.disabled = mode !== 'days';
-  expiryAtField.hidden = mode !== 'date';
-  expiryAtInput.required = mode === 'date';
-  expiryAtInput.disabled = mode !== 'date';
+  const duration = firstUseInput.checked || legacyExpiryDays;
+  expiryDaysInput.hidden = !duration;
+  expiryDaysInput.required = duration;
+  expiryDaysInput.disabled = !duration;
+  expiryAtInput.hidden = duration;
+  expiryAtInput.disabled = duration;
+  expiryLabel.textContent = duration ? 'Duration (days)' : 'Expiry';
+  expiryLabel.htmlFor = duration ? 'expiry-days' : 'expiry-at';
+  expiryLabel.hidden = legacyExpiryDays;
+  legacyExpiryModeInput.hidden = !legacyExpiryDays;
+  legacyExpiryModeInput.value = 'days';
+}
+
+function updateTrafficResetFields() {
+  monthlyResetDayInput.disabled = trafficResetInput.value !== 'monthly';
 }
 
 function toLocalDateTime(value) {
@@ -187,13 +198,22 @@ async function refreshIssuedClients() {
 function renderPolicy(data) {
   const policy = data.policy || {};
   policyForm.elements.trafficGB.value = policy.trafficGB ?? 0;
+  policyForm.elements.ipLimit.value = policy.ipLimit ?? 0;
   policyForm.elements.hwidLimit.value = policy.hwidLimit ?? 0;
-  expiryModeInput.value = ['none', 'days', 'date'].includes(policy.expiryMode) ? policy.expiryMode : 'none';
-  expiryDaysInput.value = policy.expiryDays ?? '';
+  firstUseInput.checked = policy.startAfterFirstUse === true;
+  // Keep existing creation-relative policies until the operator switches expiry mode.
+  legacyExpiryDays = policy.expiryMode === 'days' && !firstUseInput.checked;
+  expiryDaysInput.value = policy.expiryDays || 7;
   expiryAtInput.value = toLocalDateTime(policy.expiryAt);
+  for (const name of ['autoRenewDays', 'renewOnDay', 'maxRenewals']) {
+    policyForm.elements[name].value = policy[name] ?? 0;
+  }
+  trafficResetInput.value = policy.trafficReset ?? 'never';
+  monthlyResetDayInput.value = policy.monthlyResetDay ?? 1;
   policyForm.elements.group.value = policy.group || 'free-web';
   policyForm.elements.subscriptionBaseUrl.value = policy.subscriptionBaseUrl || '';
   updateExpiryFields();
+  updateTrafficResetFields();
   renderInbounds(data.inbounds, policy.inboundIds);
 
   configured = data.configured === true;
@@ -260,7 +280,17 @@ logoutButton.addEventListener('click', async () => {
   }
 });
 
-expiryModeInput.addEventListener('change', updateExpiryFields);
+firstUseInput.addEventListener('change', () => {
+  legacyExpiryDays = false;
+  updateExpiryFields();
+});
+legacyExpiryModeInput.addEventListener('change', () => {
+  if (legacyExpiryModeInput.value === 'date') {
+    legacyExpiryDays = false;
+    updateExpiryFields();
+  }
+});
+trafficResetInput.addEventListener('change', updateTrafficResetFields);
 function markDirty() {
   dirty = true;
   updateInboundCount();
@@ -294,9 +324,12 @@ policyForm.addEventListener('submit', async (event) => {
     return;
   }
 
-  const expiryMode = expiryModeInput.value;
+  const expiryMode = firstUseInput.checked || legacyExpiryDays
+    ? 'days' : expiryAtInput.value ? 'date' : 'none';
   const expiryAt = expiryMode === 'date' ? new Date(expiryAtInput.value) : null;
-  if (expiryAt && (!Number.isFinite(expiryAt.getTime()) || expiryAt <= new Date())) {
+  const renewing = Number(policyForm.elements.autoRenewDays.value) > 0 ||
+    Number(policyForm.elements.renewOnDay.value) > 0;
+  if (expiryAt && (!Number.isFinite(expiryAt.getTime()) || (!renewing && expiryAt <= new Date()))) {
     setMessage(policyStatus, 'Ngày hết hạn phải ở trong tương lai.', 'error');
     return;
   }
@@ -313,7 +346,14 @@ policyForm.addEventListener('submit', async (event) => {
 
   const policy = {
     trafficGB: Number(policyForm.elements.trafficGB.value),
+    ipLimit: Number(policyForm.elements.ipLimit.value),
     hwidLimit: Number(policyForm.elements.hwidLimit.value),
+    startAfterFirstUse: firstUseInput.checked,
+    autoRenewDays: Number(policyForm.elements.autoRenewDays.value),
+    renewOnDay: Number(policyForm.elements.renewOnDay.value),
+    maxRenewals: Number(policyForm.elements.maxRenewals.value),
+    trafficReset: trafficResetInput.value,
+    monthlyResetDay: Number(monthlyResetDayInput.value),
     expiryMode,
     expiryDays: expiryMode === 'days' ? Number(expiryDaysInput.value) : null,
     expiryAt: expiryAt ? expiryAt.toISOString() : null,

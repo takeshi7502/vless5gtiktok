@@ -17,6 +17,10 @@ The 3x-ui panel is authoritative. Admin counts are read from its current client 
 
 Synchronization continues from the last client email, so deleting clients on the panel between batches cannot skip the next clients. Disabled clients still count as existing, and their enabled state is preserved by synchronization.
 
+The admin configuration includes traffic/IP/HWID limits, group, expiry, first-use activation, renewal interval/day/count, and hourly/daily/weekly/monthly traffic resets. These map to native 3x-ui client fields; the panel runs the schedules in its own timezone. An empty expiry means no expiry. First-use activation switches expiry to a duration in days. Legacy creation-relative duration policies retain their existing behavior until the first-use switch or the legacy Duration/Expiry selector is changed. Monthly traffic reset uses day 1..31; days missing in a month are handled by the panel. IP/HWID enforcement remains the panel's native enforcement, not a new external limiter.
+
+Redis stores a small expiry-settings signature for each issued client. Synchronization preserves an activated first-use deadline and, when expiry settings have not changed, a deadline advanced by panel auto-renewal. Changing expiry settings explicitly applies the new expiry, except that already activated first-use clients retain their actual deadline; the duration is for clients awaiting activation. A recurring policy remains valid after its initial cutoff passes, allowing the panel to catch up its renewal schedule. Sync does not reset usage or renewal counters.
+
 ## Safeguards and limits
 
 - `/api/free/claim`: 12 claim links per IP per 10 minutes, and 120 globally per 10 minutes.

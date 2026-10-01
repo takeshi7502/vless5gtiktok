@@ -55,8 +55,9 @@ h1 { font-size: 26px; }
 h2 { font-size: 20px; }
 .login-section { max-width: 420px; margin-top: 52px; }
 #login-form { display: grid; gap: 10px; margin-top: 24px; }
-.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; margin-top: 24px; }
+.field-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px 16px; margin-top: 24px; }
 .field { min-width: 0; }
+.field.half-width { grid-column: span 2; }
 .field.full-width { grid-column: 1 / -1; }
 label, legend { display: block; margin-bottom: 7px; color: var(--text); font-size: 13px; font-weight: 600; }
 input:not([type="checkbox"]), select {
@@ -71,6 +72,32 @@ input:not([type="checkbox"]), select {
 }
 input:not([type="checkbox"]):focus, select:focus { border-color: var(--mint-deep); }
 input::placeholder { color: #8e999d; }
+.expiry-mode-label { width: auto; min-height: 0; margin-bottom: 7px; padding: 0 4px 0 0; border: 0; background: transparent; font-size: 13px; font-weight: 600; line-height: 1.5; }
+input:disabled { opacity: .55; cursor: not-allowed; }
+.switch-control { display: flex; align-items: center; min-height: 42px; }
+.switch-control input {
+  appearance: none;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+.switch-control input::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text);
+}
+.switch-control input:checked { border-color: var(--mint-deep); background: var(--mint-deep); }
+.switch-control input:checked::before { left: 20px; }
 .primary-button, .secondary-button {
   display: inline-flex;
   min-height: 42px;
@@ -123,7 +150,13 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .site-header { align-items: stretch; flex-direction: column; gap: 12px; }
   .brand { font-size: 17px; }
   .header-actions { justify-content: flex-start; gap: 8px 14px; }
-  .field-grid, .inbound-list { grid-template-columns: minmax(0, 1fr); }
+  .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .inbound-list { grid-template-columns: minmax(0, 1fr); }
   .form-actions button { padding-inline: 10px; font-size: 13px; }
   .sync-progress { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+}
+
+@media (max-width: 360px) {
+  .field-grid { grid-template-columns: minmax(0, 1fr); }
+  .field.half-width { grid-column: auto; }
 }

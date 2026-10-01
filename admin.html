@@ -58,33 +58,62 @@
 
         <form id="policy-form">
           <div class="field-grid">
-            <div class="field">
-              <label for="traffic-gb">Dung lượng (GB)</label>
+            <div class="field half-width">
+              <label for="traffic-gb">Traffic Limit (GB)</label>
               <input id="traffic-gb" name="trafficGB" type="number" min="0" max="100000" step="0.01" required />
             </div>
-            <div class="field">
-              <label for="hwid-limit">Giới hạn HWID</label>
+            <div class="field half-width">
+              <label for="client-group">Group</label>
+              <input id="client-group" name="group" type="text" maxlength="64" value="free-web" required />
+            </div>
+            <div class="field half-width">
+              <label for="ip-limit">IP Limit</label>
+              <input id="ip-limit" name="ipLimit" type="number" min="0" max="100000" step="1" required />
+            </div>
+            <div class="field half-width">
+              <label for="hwid-limit">HWID Limit</label>
               <input id="hwid-limit" name="hwidLimit" type="number" min="0" max="100" step="1" required />
             </div>
+            <div class="field half-width">
+              <label id="expiry-label" for="expiry-at">Expiry</label>
+              <select id="legacy-expiry-mode" class="expiry-mode-label" aria-label="Expiry mode" hidden>
+                <option value="days">Duration (days)</option>
+                <option value="date">Expiry</option>
+              </select>
+              <input id="expiry-at" name="expiryAt" type="datetime-local" />
+              <input id="expiry-days" name="expiryDays" type="number" min="1" max="3650" step="1" hidden disabled />
+            </div>
             <div class="field">
-              <label for="expiry-mode">Hết hạn</label>
-              <select id="expiry-mode" name="expiryMode">
-                <option value="none">Không hết hạn</option>
-                <option value="days">Sau số ngày</option>
-                <option value="date">Ngày cố định</option>
+              <label for="first-use">Start After First Use</label>
+              <div class="switch-control">
+                <input id="first-use" name="startAfterFirstUse" type="checkbox" role="switch" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="auto-renew-days">Auto Renew (days)</label>
+              <input id="auto-renew-days" name="autoRenewDays" type="number" min="0" max="3650" step="1" required />
+            </div>
+            <div class="field">
+              <label for="renew-on-day">Renew on day</label>
+              <input id="renew-on-day" name="renewOnDay" type="number" min="0" max="31" step="1" required />
+            </div>
+            <div class="field">
+              <label for="max-renewals">Max renewals</label>
+              <input id="max-renewals" name="maxRenewals" type="number" min="0" max="100000" step="1" required />
+            </div>
+            <div class="field">
+              <label for="traffic-reset">Traffic Reset</label>
+              <select id="traffic-reset" name="trafficReset">
+                <option value="never">Never</option>
+                <option value="hourly">Hourly</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
               </select>
             </div>
-            <div class="field" id="expiry-days-field" hidden>
-              <label for="expiry-days">Số ngày</label>
-              <input id="expiry-days" name="expiryDays" type="number" min="1" max="3650" step="1" />
-            </div>
-            <div class="field" id="expiry-at-field" hidden>
-              <label for="expiry-at">Ngày và giờ hết hạn</label>
-              <input id="expiry-at" name="expiryAt" type="datetime-local" />
-            </div>
             <div class="field">
-              <label for="client-group">Nhóm</label>
-              <input id="client-group" name="group" type="text" maxlength="64" value="free-web" required />
+              <label for="monthly-reset-day">Monthly reset day</label>
+              <input id="monthly-reset-day" name="monthlyResetDay" type="number" min="1" max="31" step="1" required />
             </div>
             <div class="field full-width">
               <label for="subscription-base-url">URL gốc subscription</label>
