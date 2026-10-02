@@ -17,6 +17,8 @@ The main page supports both sharing modes through `node-metadata.json`. Set `sub
 
 The first generated email is `#001` in a new store. Existing counters are preserved; saving the admin policy advances the counter to the highest existing numbered client and never resets it or renumbers existing clients. The `#` is URL-encoded in panel API paths. A Telegram account is not proof of a unique human, and anyone who receives a subscription URL can redistribute it.
 
+Creation reserves a small pending record in Redis before contacting the panel. It contains the email, credentials and original creation time. A failed panel write, inbound attachment or Redis finalization is retried against that same client instead of allocating another. Unissued pending clients adopt the latest policy limits and inbound choices when resumed; issued clients retain panel settings when retrieving their links. The creation lock is renewed before writes and checked again during atomic finalization, which saves the mapping and removes the pending record together. This does not adopt unrelated clients after a deliberate DB reset.
+
 Newly created clients use the panel comment `fw:@username` when the Telegram account has a username, the Telegram display name when it does not, or `fw` when neither is available. This is only an admin-facing label; the numeric Telegram ID remains the identity key. Older clients using `free-web:self-service` remain managed and continue to synchronize.
 
 The 3x-ui panel is authoritative. Admin counts are read from its current client list when the page opens, every 30 seconds while visible, and after synchronization. Redis's active-email index is reconciled with this list. A verified web claim returns its previous link only when both the Telegram mapping in Redis and its managed panel client exist. If either is missing, including a panel deletion, the claim creates a fresh client and replaces the mapping. A client explicitly disabled on the panel is not recreated or re-enabled; the bot asks the user to contact the administrator. Network, authentication, and malformed-response errors never erase the index. Existing enabled clients retain panel-side limits, expiry, and inbound attachments when retrieving their link; only an explicit admin save/sync applies the web policy to them.
@@ -25,17 +27,23 @@ Synchronization continues from the last client email, so deleting clients on the
 
 The admin configuration includes traffic/IP/HWID limits, group, expiry, first-use activation, renewal interval/day/count, and hourly/daily/weekly/monthly traffic resets. These map to native 3x-ui client fields; the panel runs the schedules in its own timezone. An empty expiry means no expiry. First-use activation switches expiry to a duration in days. Legacy creation-relative duration policies retain their existing behavior until the first-use switch or the legacy Duration/Expiry selector is changed. Monthly traffic reset uses day 1..31; days missing in a month are handled by the panel. IP/HWID enforcement remains the panel's native enforcement, not a new external limiter.
 
+A saved fixed-date policy remains readable after its cutoff: existing panel clients can still retrieve their links and admin synchronization remains available. Creating or recreating a client stops after that cutoff unless renewal is configured. Saving a new non-renewing fixed-date policy still requires a future date.
+
 Redis stores a small expiry-settings signature for each issued client. Synchronization preserves an activated first-use deadline and, when expiry settings have not changed, a deadline advanced by panel auto-renewal. Changing expiry settings explicitly applies the new expiry, except that already activated first-use clients retain their actual deadline; the duration is for clients awaiting activation. A recurring policy remains valid after its initial cutoff passes, allowing the panel to catch up its renewal schedule. Sync does not reset usage or renewal counters.
 
 ## Safeguards and limits
 
-- `/api/free/claim`: 12 claim links per IP per 10 minutes, and 120 globally per 10 minutes. Its status endpoint accepts only the short-lived claim capability in an HTTP header.
-- Bot: 2 ordinary `/start` replies per Telegram account per 5 minutes and 6 claim attempts per Telegram account per 10 minutes; ordinary starts are also capped at 120 globally per 5 minutes.
+- `/api/free/claim`: 12 claim links per IP per 10 minutes, and 120 globally per 10 minutes. Its status endpoint accepts only the short-lived claim capability in an HTTP header, with atomic Redis limits of 90 reads per claim and 600 per IP per minute.
+- `/api/free/subscription`: atomic Redis limits of 12 reads per claim and 120 per IP per minute. Claim validation and admission happen in one Redis command. Invalid-format tokens are rejected without reading Redis.
+- Public status and the static subscription proxy have an additional bounded, per-instance IP guard of 120 reads per minute and public CDN caching for 15 seconds. All read endpoints have a per-instance guard to reject bursts before accessing Redis. These local guards supplement, rather than replace, edge rate limits across multiple serverless instances.
+- When Redis is configured, static subscription cache misses also share a durable global limit of 120 upstream fetches per minute. Static mode without Redis uses the local guard and CDN caching.
+- Upstream subscription responses are cached server-side for 15 seconds, keyed by the full subscription URL, with concurrent reads sharing one fetch. Personal responses remain `no-store` to browsers and shared CDNs and still require a valid claim on every request. Bodies larger than 512 KiB are rejected.
+- Bot: 2 ordinary `/start` replies per Telegram account per 5 minutes and 6 claim attempts per Telegram account per 10 minutes. Invalid, used and expired claim codes share the ordinary start cooldown. Rejected user starts do not consume the global start quota of 120 per 5 minutes. Valid web claims have a separate global quota of 120 per 10 minutes.
 - Admin password: 8 attempts per IP per 15 minutes.
-- All limits are stored atomically in Redis. They are deliberately small enough for normal use while protecting the panel and bot from automated bursts.
+- Durable limits are stored atomically in Redis. The browser respects `Retry-After` when polling claim status.
 - Sync processes 20 clients per request, with at most 4 concurrent panel reads/updates. This keeps a 100-client update to roughly five browser requests while avoiding a large burst against 3x-ui.
 
-For volumetric HTTP attacks, add an edge rate-limit rule in Vercel Firewall for `POST /api/free/claim`; application-level limits still remain necessary because they protect the bot and panel regardless of the edge configuration.
+For volumetric HTTP attacks, configure Vercel Firewall limits for `/api/free/public`, `/api/free/claim`, `/api/free/subscription` and `/api/subscription-source`. Edge limits are necessary to reject traffic before function execution and Redis billing; local caches and application admission do not prevent distributed HTTP floods. Firewall rules must be set in the Vercel project separately from this source code.
 
 ## Vercel variables
 

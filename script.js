@@ -935,10 +935,10 @@ async function requestTelegramVerification() {
   }
 }
 
-function scheduleClaimPoll() {
+function scheduleClaimPoll(delayMs = 2000) {
   window.clearTimeout(webClaimPollTimer);
   if (!readStoredWebClaim()) return;
-  webClaimPollTimer = window.setTimeout(() => { void refreshWebClaim(); }, 2000);
+  webClaimPollTimer = window.setTimeout(() => { void refreshWebClaim(); }, delayMs);
 }
 
 async function refreshWebClaim() {
@@ -957,6 +957,11 @@ async function refreshWebClaim() {
       cache: 'no-store',
       headers: { 'x-free-web-claim': claim.token },
     });
+    if (response.status === 429) {
+      const retrySeconds = Number(response.headers.get('retry-after')) || 60;
+      scheduleClaimPoll(Math.min(60, Math.max(1, retrySeconds)) * 1000);
+      return;
+    }
     const result = await response.json().catch(() => ({}));
     if (!response.ok || typeof result.state !== 'string') throw new Error('Claim unavailable');
 

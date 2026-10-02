@@ -6,6 +6,7 @@ const { syncBatch } = require('../../lib/free-sync');
 const { loadIssuedClients } = require('../../lib/free-registry');
 const { createXuiClient } = require('../../lib/xui');
 const { requestIp, retryHeaders } = require('../../lib/free-request');
+const { clearStatusCache } = require('../../lib/free-service');
 
 const LOGIN_LIMIT = Object.freeze({ limit: 8, windowSeconds: 15 * 60 });
 
@@ -55,7 +56,7 @@ async function adminData() {
   }
   const savedPolicy = await store.readPolicy();
   data.policy = savedPolicy || DEFAULT_POLICY;
-  try { validatePolicy(savedPolicy); data.configured = true; }
+  try { validatePolicy(savedPolicy, { allowPastExpiry: true }); data.configured = true; }
   catch { /* policy must be completed before self-service is enabled */ }
   try {
     const xui = createXuiClient();
@@ -120,10 +121,11 @@ module.exports = async (request, response) => {
       }, 0);
       await store.seedCounter(maxEmail);
       await store.savePolicy(policy);
+      clearStatusCache();
       return sendJson(response, 200, { saved: true, policy });
     }
     if (body.action === 'sync') {
-      const policy = validatePolicy(await store.readPolicy());
+      const policy = validatePolicy(await store.readPolicy(), { allowPastExpiry: true });
       const cursor = body.cursor === undefined ? 0 : Number(body.cursor);
       return sendJson(response, 200, await syncBatch(policy, createXuiClient(), cursor, store, body.afterEmail));
     }

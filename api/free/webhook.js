@@ -14,6 +14,7 @@ const {
 const START_LIMIT = Object.freeze({ limit: 2, windowSeconds: 5 * 60 });
 const START_GLOBAL_LIMIT = Object.freeze({ limit: 120, windowSeconds: 5 * 60 });
 const CLAIM_LIMIT = Object.freeze({ limit: 6, windowSeconds: 10 * 60 });
+const CLAIM_GLOBAL_LIMIT = Object.freeze({ limit: 120, windowSeconds: 10 * 60 });
 
 function startMessage() {
   const url = testPageUrl();
@@ -35,7 +36,7 @@ function subscriptionMessage(result) {
 }
 
 async function existingSubscription(telegramUserId) {
-  const policy = validatePolicy(await store.readPolicy());
+  const policy = validatePolicy(await store.readPolicy(), { allowPastExpiry: true });
   const xui = createXuiClient({ subscriptionBaseUrl: policy.subscriptionBaseUrl });
   const { row } = await findIssuedClient(telegramUserId, xui);
   if (!row) return null;
@@ -48,6 +49,16 @@ async function existingSubscription(telegramUserId) {
     email: row.client.email,
     url: subscriptionUrl(policy, row.client.subId),
   };
+}
+
+async function ordinaryReply(update) {
+  const limit = await store.fixedWindowRateLimit('bot-start-user', update.telegramUserId, START_LIMIT);
+  if (!limit.allowed) return;
+  const globalLimit = await store.fixedWindowRateLimit('bot-start-global', 'all', START_GLOBAL_LIMIT);
+  if (!globalLimit.allowed) return;
+  const result = await existingSubscription(update.telegramUserId);
+  const sent = await sendTelegramMessage(update.chatId, result ? subscriptionMessage(result) : startMessage());
+  if (!sent.sent) throw new Error('Telegram delivery failed');
 }
 
 module.exports = async (request, response) => {
@@ -72,13 +83,7 @@ module.exports = async (request, response) => {
     }
 
     if (update.type !== 'claim') {
-      const limit = await store.fixedWindowRateLimit('bot-start-user', update.telegramUserId, START_LIMIT);
-      const globalLimit = await store.fixedWindowRateLimit('bot-start-global', 'all', START_GLOBAL_LIMIT);
-      if (limit.allowed && globalLimit.allowed) {
-        const result = await existingSubscription(update.telegramUserId);
-        const sent = await sendTelegramMessage(update.chatId, result ? subscriptionMessage(result) : startMessage());
-        if (!sent.sent) throw new Error('Telegram delivery failed');
-      }
+      await ordinaryReply(update);
       if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
       return sendJson(response, 200, { ok: true });
     }
@@ -89,15 +94,19 @@ module.exports = async (request, response) => {
       return sendJson(response, 200, { ok: true });
     }
     if (!(await store.consumeWebClaim(update.claimToken))) {
-      const result = await existingSubscription(update.telegramUserId);
-      const sent = await sendTelegramMessage(update.chatId, result ? subscriptionMessage(result) : startMessage());
-      if (!sent.sent) throw new Error('Telegram delivery failed');
+      await ordinaryReply(update);
       if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
       return sendJson(response, 200, { ok: true });
     }
 
     webClaimToken = update.claimToken;
-    const policy = validatePolicy(await store.readPolicy());
+    const globalLimit = await store.fixedWindowRateLimit('bot-claim-global', 'all', CLAIM_GLOBAL_LIMIT);
+    if (!globalLimit.allowed) {
+      await store.finishWebClaim(webClaimToken, { state: 'failed' });
+      if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
+      return sendJson(response, 200, { ok: true });
+    }
+    const policy = validatePolicy(await store.readPolicy(), { allowPastExpiry: true });
     const xui = createXuiClient({ subscriptionBaseUrl: policy.subscriptionBaseUrl });
     const result = await provisionForTelegram(
       update.telegramUserId,
@@ -128,6 +137,8 @@ module.exports = async (request, response) => {
     }
     const message = error.code === 'CLIENT_DISABLED'
       ? disabledMessage()
+      : error.code === 'CLIENT_ISSUANCE_CLOSED'
+        ? 'Đợt cấp link hiện đã kết thúc. Vui lòng liên hệ quản trị viên.'
       : 'Chưa thể tạo hoặc lấy link lúc này. Vui lòng thử lại sau.';
     const sent = await sendTelegramMessage(update.chatId, message);
     if (sent.sent && updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId).catch(() => {});

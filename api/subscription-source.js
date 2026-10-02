@@ -1,5 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { allowRead } = require('../lib/free-read-guard');
+const { sendSubscription } = require('../lib/free-subscription');
 
 function staticSubscriptionUrl() {
   const metadataPath = path.join(process.cwd(), 'node-metadata.json');
@@ -20,6 +22,7 @@ module.exports = async (request, response) => {
     response.setHeader('allow', 'GET');
     return response.end();
   }
+  if (!allowRead(request, response, 'static-subscription')) return;
 
   let url;
   try {
@@ -37,21 +40,10 @@ module.exports = async (request, response) => {
   }
 
   try {
-    const upstream = await fetch(url, {
-      headers: { 'user-agent': 'VLESS-5G-TikTok/1.0' },
-      redirect: 'error',
-      signal: AbortSignal.timeout(10_000),
-    });
-    response.statusCode = upstream.status;
-    const contentType = upstream.headers.get('content-type');
-    const subscriptionInfo = upstream.headers.get('subscription-userinfo');
-    if (contentType) response.setHeader('content-type', contentType);
-    if (subscriptionInfo) response.setHeader('subscription-userinfo', subscriptionInfo);
-    response.setHeader('cache-control', 'no-store');
-    response.setHeader('x-content-type-options', 'nosniff');
-    response.end(Buffer.from(await upstream.arrayBuffer()));
-  } catch {
-    response.statusCode = 502;
+    await sendSubscription(response, url, { publicCache: true });
+  } catch (error) {
+    response.statusCode = error.statusCode === 429 ? 429 : 502;
+    if (error.retryAfter) response.setHeader('retry-after', String(error.retryAfter));
     response.setHeader('cache-control', 'no-store');
     response.end();
   }
