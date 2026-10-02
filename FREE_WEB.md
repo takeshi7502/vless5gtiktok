@@ -19,12 +19,6 @@ The first generated email is `#001` in a new store. Existing counters are preser
 
 Newly created clients use the panel comment `fw:@username` when the Telegram account has a username, the Telegram display name when it does not, or `fw` when neither is available. This is only an admin-facing label; the numeric Telegram ID remains the identity key. Older clients using `free-web:self-service` remain managed and continue to synchronize.
 
-## Usage data and low-data alerts
-
-Users can send `/data` to the bot to read the current upload and download total from their own panel client. The command is limited to two requests per Telegram account per minute and 120 requests globally per minute; rejected requests do not call 3x-ui.
-
-The scheduled usage checker sends one notification per quota cycle when an enabled, limited client has no more than 1 GiB remaining. The marker is stored in Redis, so duplicate cron delivery cannot send duplicate alerts, and it is cleared after the quota is reset above the threshold. Set `CRON_SECRET` to a separate random value of at least 16 characters; Vercel sends it as the cron request's Authorization bearer token. The included Vercel schedule runs daily at `00:00 UTC` (approximately 07:00 in Vietnam). Hobby projects cannot run Vercel Cron more often than once daily, so use a protected external scheduler against `/api/free/usage-alerts` with `Authorization: Bearer <CRON_SECRET>` for more frequent alerts.
-
 The 3x-ui panel is authoritative. Admin counts are read from its current client list when the page opens, every 30 seconds while visible, and after synchronization. Redis's active-email index is reconciled with this list. A verified web claim returns its previous link only when both the Telegram mapping in Redis and its managed panel client exist. If either is missing, including a panel deletion, the claim creates a fresh client and replaces the mapping. A client explicitly disabled on the panel is not recreated or re-enabled; the bot asks the user to contact the administrator. Network, authentication, and malformed-response errors never erase the index. Existing enabled clients retain panel-side limits, expiry, and inbound attachments when retrieving their link; only an explicit admin save/sync applies the web policy to them.
 
 Synchronization continues from the last client email, so deleting clients on the panel between batches cannot skip the next clients. Disabled clients still count as existing, and their enabled state is preserved by synchronization.
@@ -37,7 +31,6 @@ Redis stores a small expiry-settings signature for each issued client. Synchroni
 
 - `/api/free/claim`: 12 claim links per IP per 10 minutes, and 120 globally per 10 minutes. Its status endpoint accepts only the short-lived claim capability in an HTTP header.
 - Bot: 2 ordinary `/start` replies per Telegram account per 5 minutes and 6 claim attempts per Telegram account per 10 minutes; ordinary starts are also capped at 120 globally per 5 minutes.
-- Bot `/data`: 2 requests per Telegram account per minute and 120 globally per minute.
 - Admin password: 8 attempts per IP per 15 minutes.
 - All limits are stored atomically in Redis. They are deliberately small enough for normal use while protecting the panel and bot from automated bursts.
 - Sync processes 20 clients per request, with at most 4 concurrent panel reads/updates. This keeps a 100-client update to roughly five browser requests while avoiding a large burst against 3x-ui.
