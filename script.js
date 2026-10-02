@@ -868,7 +868,7 @@ async function prepareVerification(message) {
       throw new Error('Bot unavailable');
     }
     botUsername = username;
-    setVerificationPresentation('ready', message || 'Liên kết Telegram để xác minh tài khoản và nhận link subscription riêng.');
+    setVerificationPresentation('ready', message || 'Liên kết bot Telegram để xác minh tài khoản và nhận link subscription miễn phí.');
   } catch {
     setVerificationPresentation('loading', 'Chưa thể kết nối bot lúc này. Vui lòng tải lại trang sau.');
   }
