@@ -38,6 +38,7 @@ const defaultDescription = descriptionMeta?.content;
 const localizedElements = [
   { selector: '#page-title', en: 'FREE VLESS SERVER' },
   { selector: '.header-description', en: '4G/5G data for TikTok' },
+  { selector: '.top-link > span:last-child', en: 'Top usage' },
   { selector: '.connection-panel .panel-kicker', en: 'SUBSCRIPTION LINK (VLESS-WS)' },
   { selector: '#connection-title', en: 'Connection gateway' },
   { selector: '.node-panel', attribute: 'aria-label', en: 'Available node list' },

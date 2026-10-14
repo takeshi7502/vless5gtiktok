@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/top",
+      "destination": "/top.html"
+    },
+    {
       "source": "/free",
       "destination": "/index.html"
     },
@@ -17,11 +21,11 @@
   ],
   "headers": [
     {
-      "source": "/(free|admin)",
+      "source": "/(free|admin|top)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
-      "source": "/(free|admin).html",
+      "source": "/(free|admin|top).html",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     }
   ]

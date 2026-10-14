@@ -31,6 +31,14 @@ A saved fixed-date policy remains readable after its cutoff: existing panel clie
 
 Redis stores a small expiry-settings signature for each issued client. Synchronization preserves an activated first-use deadline and, when expiry settings have not changed, a deadline advanced by panel auto-renewal. Changing expiry settings explicitly applies the new expiry, except that already activated first-use clients retain their actual deadline; the duration is for clients awaiting activation. A recurring policy remains valid after its initial cutoff passes, allowing the panel to catch up its renewal schedule. Sync does not reset usage or renewal counters.
 
+## Public usage ranking
+
+The main header links to `/top`. The page shows up to 20 managed `fw`/legacy clients with nonzero usage, sorted by current upload plus download. Summary totals include all managed clients with valid traffic, including disabled clients. Duplicate email records count once, not once per inbound. GB/TB use the same binary units as the panel (1024-based). This is each client's current reset period, not historical monthly usage; individual reset dates may differ.
+
+`GET /api/free/top` returns only numbered emails, ranks, byte totals and the snapshot timestamp. No Telegram names/IDs, UUIDs, comments, inbound details or subscription credentials are public. The backend reads the panel's existing `clients/list` once per refresh and stores only the sanitized snapshot in Redis for up to seven days. A shared owner-checked 30-second refresh lease prevents concurrent instances from refreshing together. Snapshots are fresh for five minutes; requests trigger refresh on demand with no cron or extra environment variables. Failures keep the last snapshot and timestamp, with a 30-second retry cooldown; no valid snapshot returns 503 with `Retry-After`.
+
+The endpoint uses a 60-request/IP/minute instance guard, a 15-second instance cache and 15-second public CDN cache. Include `/api/free/top` in any Vercel Firewall API limits. Panel usage must be available in the `traffic.up` and `traffic.down` fields; missing traffic fields are not treated as zero. A null traffic record represents no recorded usage yet.
+
 ## Safeguards and limits
 
 - `/api/free/claim`: 12 claim links per IP per 10 minutes, and 120 globally per 10 minutes. Its status endpoint accepts only the short-lived claim capability in an HTTP header, with atomic Redis limits of 90 reads per claim and 600 per IP per minute.
