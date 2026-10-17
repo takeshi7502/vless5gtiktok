@@ -38,6 +38,7 @@ module.exports = async (request, response) => {
 
     const status = await serviceStatus();
     if (!status.ready) return sendJson(response, 503, { error: 'Service is unavailable' });
+    if (!status.registrationOpen) return sendJson(response, 403, { code: 'REGISTRATION_PAUSED' });
 
     const globalLimit = await store.fixedWindowRateLimit('web-claim-global', 'all', GLOBAL_LIMIT);
     if (!globalLimit.allowed) return sendJson(response, 503, { error: 'Service is busy' }, retryHeaders(globalLimit));
@@ -46,7 +47,8 @@ module.exports = async (request, response) => {
     return sendJson(response, 200, { token, botUsername: status.botUsername, expiresIn: 5 * 60 }, {
       'referrer-policy': 'no-referrer',
     });
-  } catch {
+  } catch (error) {
+    if (error.code === 'REGISTRATION_PAUSED') return sendJson(response, 403, { code: error.code });
     return sendJson(response, 503, { error: 'Service is unavailable' });
   }
 };

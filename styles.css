@@ -187,6 +187,7 @@ img { max-width: 100%; }
 .verify-telegram-button:hover:not(:disabled) { background: #b5f4d7; transform: translateY(-2px); box-shadow: 3px 3px 0 var(--shadow); }
 .verify-telegram-button:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: none; }
 .verify-telegram-button:disabled { cursor: wait; opacity: 0.58; }
+.verify-telegram-button[data-state="paused"] { border-color: #62686b; background: #393e40; color: #b7bdc0; box-shadow: none; opacity: 1; cursor: not-allowed; }
 .icon-link { --icon: url("./assets/icons/link.svg"); }
 .subscription-row { display: flex; min-width: 0; align-items: stretch; gap: 10px; }
 .subscription-url {

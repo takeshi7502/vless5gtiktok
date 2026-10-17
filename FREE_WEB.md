@@ -8,6 +8,12 @@ This separate step prevents a bot deep link copied from a normal start message f
 
 The main page supports both sharing modes through `node-metadata.json`. Set `subscription.url` to one public HTTPS subscription URL to use the original static shared-link page; the Telegram panel is hidden and the browser does not call the free-link APIs. Leave `subscription.url` as an empty string to use Telegram verification and personal links. The static mode uses `/api/subscription-source` as a server-side proxy, so its node list can load without requiring CORS on the subscription host.
 
+### Pause New Registrations
+
+Set `TELEGRAM_ADMIN_IDS` in Vercel Production to the numeric Telegram user IDs allowed to control registration (comma-separated, not usernames), then redeploy. No IDs means nobody can use these commands. Send the bot `/dangky off` to pause web verification, `/dangky on` to reopen, or `/dangky` to view the current state. Commands only work in a private chat from an allowlisted account and require an authenticated Telegram webhook.
+
+The switch is persisted separately from the client policy in Redis and defaults to on when absent. Pausing blocks both new web claims and unused claims issued before the pause, enforced atomically in Redis. Already-processing verification may finish; existing verified sessions, client connections and `/start` retrieval of previously issued links are not revoked. No new clients are created through direct `/start`. The web shows a gray disabled verification button and a temporary-registration-pause message; visible pages without an active claim recheck every 30 seconds and on focus. Pending claims see the pause during their normal polling. Public CDN status can lag up to 15 seconds, but the server-side gate uses current Redis state. Static shared-link mode is unaffected. Saving the admin policy does not reopen registration; use `/dangky on`. A Redis reset removes the switch along with the other application data.
+
 ## Setup
 
 1. Create a separate Telegram bot. Rotate any bot or panel API token previously shared outside Vercel, then use `.env.example` as the list of Vercel Environment Variable names. Never put real values in that file or commit them. `XUI_API_TOKEN` needs 3x-ui admin scope. `XUI_ACCESS_URL` includes the panel's private base path; its HTTPS certificate must match the hostname (or IP SAN).

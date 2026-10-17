@@ -7,6 +7,7 @@ const { findIssuedClient, provisionForTelegram } = require('../../lib/free-provi
 const { testPageUrl } = require('../../lib/free-service');
 const {
   isTelegramWebhookSecretValid,
+  isTelegramAdmin,
   parsePrivateStartUpdate,
   sendTelegramMessage,
 } = require('../../lib/telegram');
@@ -57,7 +58,26 @@ async function ordinaryReply(update) {
   const globalLimit = await store.fixedWindowRateLimit('bot-start-global', 'all', START_GLOBAL_LIMIT);
   if (!globalLimit.allowed) return;
   const result = await existingSubscription(update.telegramUserId);
-  const sent = await sendTelegramMessage(update.chatId, result ? subscriptionMessage(result) : startMessage());
+  const message = result ? subscriptionMessage(result) : (await store.registrationEnabled()) ? startMessage() : pausedMessage();
+  const sent = await sendTelegramMessage(update.chatId, message);
+  if (!sent.sent) throw new Error('Telegram delivery failed');
+}
+
+function pausedMessage() {
+  return 'Hiện tại trang web đang tạm dừng xác minh đăng ký mới. Vui lòng quay lại sau. Các link đã cấp vẫn sử dụng bình thường.';
+}
+
+async function registrationReply(update) {
+  const limit = await store.fixedWindowRateLimit('bot-registration-admin', update.telegramUserId, {
+    limit: 10, windowSeconds: 60,
+  });
+  if (!limit.allowed) return;
+  const enabled = update.enabled === null
+    ? await store.registrationEnabled()
+    : await store.setRegistrationEnabled(update.enabled, update.updateId);
+  const message = `Đăng ký xác minh trên web: ${enabled ? 'ĐANG BẬT' : 'ĐANG TẮT'}.\n` +
+    'Dùng /dangky on để mở, /dangky off để tạm dừng. Link đã cấp không bị ảnh hưởng.';
+  const sent = await sendTelegramMessage(update.chatId, message);
   if (!sent.sent) throw new Error('Telegram delivery failed');
 }
 
@@ -71,6 +91,9 @@ module.exports = async (request, response) => {
   try { update = parsePrivateStartUpdate(await readJson(request)); }
   catch { return sendJson(response, 400, { error: 'Invalid update' }); }
   if (!update) return sendJson(response, 200, { ok: true });
+  if (update.type === 'registration' && (!isTelegramAdmin(update.telegramUserId) || update.updateId === null)) {
+    return sendJson(response, 200, { ok: true });
+  }
 
   let updateClaimId = null;
   let webClaimToken = null;
@@ -83,7 +106,8 @@ module.exports = async (request, response) => {
     }
 
     if (update.type !== 'claim') {
-      await ordinaryReply(update);
+      if (update.type === 'registration') await registrationReply(update);
+      else await ordinaryReply(update);
       if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
       return sendJson(response, 200, { ok: true });
     }
@@ -135,7 +159,9 @@ module.exports = async (request, response) => {
       if (updateClaimId) await store.releaseWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
       return sendJson(response, 503, { error: 'Retry later' });
     }
-    const message = error.code === 'CLIENT_DISABLED'
+    const message = error.code === 'REGISTRATION_PAUSED'
+      ? pausedMessage()
+      : error.code === 'CLIENT_DISABLED'
       ? disabledMessage()
       : error.code === 'CLIENT_ISSUANCE_CLOSED'
         ? 'Đợt cấp link hiện đã kết thúc. Vui lòng liên hệ quản trị viên.'

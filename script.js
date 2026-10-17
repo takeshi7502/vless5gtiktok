@@ -807,11 +807,12 @@ function setVerificationPresentation(state, message) {
   subscriptionAccess?.setAttribute('hidden', '');
   if (subscriptionVerificationMessage) subscriptionVerificationMessage.textContent = message;
   if (verifyTelegramButton) {
-    verifyTelegramButton.disabled = state === 'loading' || state === 'claimed' || state === 'disabled';
+    verifyTelegramButton.disabled = ['loading', 'claimed', 'disabled', 'paused'].includes(state);
     verifyTelegramButton.dataset.state = state;
   }
   if (verifyTelegramLabel) {
-    verifyTelegramLabel.textContent = state === 'pending' ? 'Mở lại bot Telegram' : 'Xác minh Telegram';
+    verifyTelegramLabel.textContent = state === 'paused' ? 'Tạm dừng xác minh'
+      : state === 'pending' ? 'Mở lại bot Telegram' : 'Xác minh Telegram';
   }
 }
 
@@ -857,21 +858,38 @@ function activateStaticSubscription() {
   void loadSubscriptionNodes();
 }
 
-async function prepareVerification(message) {
+function showRegistrationPaused() {
+  setVerificationPresentation('paused', 'Hiện tại trang web đang tạm dừng xác minh đăng ký mới. Vui lòng quay lại sau.');
+}
+
+let checkingVerificationStatus = false;
+
+async function prepareVerification(message, { background = false } = {}) {
   if (isStaticSubscriptionMode) return;
+  if (background && readStoredWebClaim()) return;
+  if (checkingVerificationStatus) return;
+  checkingVerificationStatus = true;
   resetSubscriptionPresentation();
-  setVerificationPresentation('loading', message || 'Đang kiểm tra bot Telegram...');
+  if (!background) setVerificationPresentation('loading', message || 'Đang kiểm tra bot Telegram...');
   try {
-    const response = await fetch('/api/free/public', { cache: 'no-store' });
+    const response = await fetch('/api/free/public', { cache: 'no-store', signal: AbortSignal.timeout(requestTimeoutMs) });
     const data = await response.json().catch(() => ({}));
+    if (readStoredWebClaim()) return;
     const username = typeof data.botUsername === 'string' ? data.botUsername.replace(/^@/, '').trim() : '';
     if (!response.ok || data.ready !== true || !/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(username)) {
       throw new Error('Bot unavailable');
     }
     botUsername = username;
+    if (data.registrationOpen === false) {
+      showRegistrationPaused();
+      return;
+    }
     setVerificationPresentation('ready', message || 'Liên kết bot Telegram để xác minh tài khoản và nhận link subscription miễn phí.');
   } catch {
+    if (readStoredWebClaim()) return;
     setVerificationPresentation('loading', 'Chưa thể kết nối bot lúc này. Vui lòng tải lại trang sau.');
+  } finally {
+    checkingVerificationStatus = false;
   }
 }
 
@@ -887,6 +905,7 @@ function openTelegramTab(url = 'about:blank') {
 
 async function requestTelegramVerification() {
   if (isStaticSubscriptionMode) return;
+  if (!verifyTelegramButton || verifyTelegramButton.disabled) return;
   const existing = readStoredWebClaim();
   if (existing?.botUsername) {
     if (!openTelegramTab(telegramDeepLink(existing))) {
@@ -980,6 +999,11 @@ async function refreshWebClaim() {
       scheduleClaimPoll();
       return;
     }
+    if (result.state === 'paused') {
+      showRegistrationPaused();
+      scheduleClaimPoll(30000);
+      return;
+    }
     clearWebClaim();
     resetSubscriptionPresentation();
     if (result.state === 'disabled') {
@@ -996,8 +1020,9 @@ async function refreshWebClaim() {
 }
 
 function refreshWebClaimOnReturn() {
-  if (!isStaticSubscriptionMode && document.visibilityState === 'visible' && readStoredWebClaim()) {
-    void refreshWebClaim();
+  if (!isStaticSubscriptionMode && document.visibilityState === 'visible') {
+    if (readStoredWebClaim()) void refreshWebClaim();
+    else void prepareVerification(undefined, { background: true });
   }
 }
 
@@ -1171,3 +1196,8 @@ loadNodeMetadata().then(() => {
 });
 window.setInterval(pingSubscriptionUrl, 60000);
 window.setInterval(loadSubscriptionNodes, 300000);
+window.setInterval(() => {
+  if (!isStaticSubscriptionMode && document.visibilityState === 'visible' && !readStoredWebClaim()) {
+    void prepareVerification(undefined, { background: true });
+  }
+}, 30000);
