@@ -79,7 +79,8 @@ function showUnavailable() {
   logoutButton.hidden = true;
   webhookButton.hidden = true;
   pageStatus.hidden = false;
-  pageStatus.textContent = 'Trang quản trị chưa sẵn sàng. Kiểm tra cấu hình máy chủ rồi tải lại trang.';
+  pageStatus.textContent =
+    'Trang quản trị chưa sẵn sàng. Kiểm tra cấu hình máy chủ rồi tải lại trang.';
 }
 
 function updateSyncAvailability() {
@@ -95,7 +96,11 @@ async function request(method = 'GET', body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   let data = {};
-  try { data = await response.json(); } catch { /* A non-JSON error has no public detail. */ }
+  try {
+    data = await response.json();
+  } catch {
+    /* A non-JSON error has no public detail. */
+  }
 
   if (!response.ok) {
     const error = new Error(`Yêu cầu không thành công (HTTP ${response.status}).`);
@@ -127,8 +132,7 @@ function toLocalDateTime(value) {
   if (!value) return '';
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return '';
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    .toISOString().slice(0, 16);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
 function renderInbounds(inbounds, selectedIds) {
@@ -144,7 +148,9 @@ function renderInbounds(inbounds, selectedIds) {
   }
 
   const columns = [document.createElement('div'), document.createElement('div')];
-  columns.forEach((column) => { column.className = 'inbound-column'; });
+  columns.forEach((column) => {
+    column.className = 'inbound-column';
+  });
   const splitAt = Math.ceil(inbounds.length / 2);
   let index = 0;
   for (const inbound of inbounds) {
@@ -163,7 +169,9 @@ function renderInbounds(inbounds, selectedIds) {
     label.append(checkbox, text);
     columns[index++ < splitAt ? 0 : 1].append(label);
   }
-  columns.filter((column) => column.childElementCount > 0).forEach((column) => inboundList.append(column));
+  columns
+    .filter((column) => column.childElementCount > 0)
+    .forEach((column) => inboundList.append(column));
   updateInboundCount();
 }
 
@@ -178,7 +186,8 @@ function updateIssuedCount(value) {
 }
 
 async function refreshIssuedClients() {
-  if (dashboard.hidden || document.hidden || syncing || refreshingClients || !storageAvailable) return;
+  if (dashboard.hidden || document.hidden || syncing || refreshingClients || !storageAvailable)
+    return;
   refreshingClients = true;
   try {
     const data = await request('POST', { action: 'clientStatus' });
@@ -232,7 +241,11 @@ function renderPolicy(data) {
       : '';
   setMessage(policyStatus, setupError, setupError ? 'error' : '');
   updateIssuedCount(data.issuedCount);
-  setMessage(issuedStatus, panelAvailable ? '' : 'Chưa thể cập nhật số client từ panel.', panelAvailable ? '' : 'error');
+  setMessage(
+    issuedStatus,
+    panelAvailable ? '' : 'Chưa thể cập nhật số client từ panel.',
+    panelAvailable ? '' : 'error',
+  );
 }
 
 async function loadAdmin() {
@@ -261,7 +274,11 @@ loginForm.addEventListener('submit', async (event) => {
     await loadAdmin();
   } catch (error) {
     passwordInput.value = '';
-    setMessage(loginStatus, error.status === 401 ? 'Mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng thử lại.', 'error');
+    setMessage(
+      loginStatus,
+      error.status === 401 ? 'Mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng thử lại.',
+      'error',
+    );
   } finally {
     loginButton.disabled = false;
   }
@@ -305,11 +322,15 @@ policyForm.addEventListener('input', markDirty);
 policyForm.addEventListener('change', markDirty);
 
 document.getElementById('select-all').addEventListener('click', () => {
-  inboundList.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = true; });
+  inboundList.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.checked = true;
+  });
   markDirty();
 });
 document.getElementById('clear-all').addEventListener('click', () => {
-  inboundList.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
+  inboundList.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.checked = false;
+  });
   markDirty();
 });
 
@@ -317,17 +338,19 @@ policyForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (!policyForm.reportValidity()) return;
 
-  const inboundIds = [...inboundList.querySelectorAll('input[type="checkbox"]:checked')]
-    .map((input) => Number(input.value));
+  const inboundIds = [...inboundList.querySelectorAll('input[type="checkbox"]:checked')].map(
+    (input) => Number(input.value),
+  );
   if (inboundIds.length === 0) {
     setMessage(policyStatus, 'Hãy chọn ít nhất một inbound.', 'error');
     return;
   }
 
-  const expiryMode = firstUseInput.checked || legacyExpiryDays
-    ? 'days' : expiryAtInput.value ? 'date' : 'none';
+  const expiryMode =
+    firstUseInput.checked || legacyExpiryDays ? 'days' : expiryAtInput.value ? 'date' : 'none';
   const expiryAt = expiryMode === 'date' ? new Date(expiryAtInput.value) : null;
-  const renewing = Number(policyForm.elements.autoRenewDays.value) > 0 ||
+  const renewing =
+    Number(policyForm.elements.autoRenewDays.value) > 0 ||
     Number(policyForm.elements.renewOnDay.value) > 0;
   if (expiryAt && (!Number.isFinite(expiryAt.getTime()) || (!renewing && expiryAt <= new Date()))) {
     setMessage(policyStatus, 'Ngày hết hạn phải ở trong tương lai.', 'error');
@@ -337,8 +360,15 @@ policyForm.addEventListener('submit', async (event) => {
   const subscriptionBaseUrl = policyForm.elements.subscriptionBaseUrl.value.trim();
   try {
     const url = new URL(subscriptionBaseUrl);
-    if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash ||
-        !url.pathname.endsWith('/')) throw new Error('Invalid subscription URL');
+    if (
+      url.protocol !== 'https:' ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      !url.pathname.endsWith('/')
+    )
+      throw new Error('Invalid subscription URL');
   } catch {
     setMessage(policyStatus, 'URL subscription phải dùng HTTPS và kết thúc bằng /.', 'error');
     return;
@@ -376,7 +406,12 @@ policyForm.addEventListener('submit', async (event) => {
     await syncClients({ automatic: true });
   } catch (error) {
     if (error.status === 401) showLogin();
-    else setMessage(policyStatus, 'Không thể lưu cấu hình. Vui lòng kiểm tra dữ liệu và thử lại.', 'error');
+    else
+      setMessage(
+        policyStatus,
+        'Không thể lưu cấu hình. Vui lòng kiểm tra dữ liệu và thử lại.',
+        'error',
+      );
   } finally {
     policyForm.inert = false;
     saveButton.disabled = !panelAvailable || !storageAvailable;
@@ -413,16 +448,24 @@ async function syncClients({ automatic = false } = {}) {
       updatedTotal += updated;
       setSyncProgress(processedTotal, totalClients, true);
       const total = Number.isFinite(result.total) ? `/${result.total}` : '';
-      setMessage(syncStatus, `Đợt ${batches}: ${processed}${total} đã kiểm tra, ${updatedTotal} cập nhật${errorCount ? `, ${errorCount} lỗi` : ''}.`);
+      setMessage(
+        syncStatus,
+        `Đợt ${batches}: ${processed}${total} đã kiểm tra, ${updatedTotal} cập nhật${errorCount ? `, ${errorCount} lỗi` : ''}.`,
+      );
       if (result.done === true) break;
-      if (!result.cursor || result.cursor === cursor) throw new Error('Sync cursor did not advance');
+      if (!result.cursor || result.cursor === cursor)
+        throw new Error('Sync cursor did not advance');
       cursor = result.cursor;
       afterEmail = result.afterEmail;
     }
     const failures = [...failedEmails];
     const failedNames = failures.slice(0, 12).join(', ');
     const more = failures.length > 12 ? ` và ${failures.length - 12} client khác` : '';
-    setMessage(syncStatus, `Đồng bộ xong sau ${batches} đợt${failures.length ? `; lỗi: ${failedNames}${more}.` : '.'}`, failures.length ? 'error' : 'success');
+    setMessage(
+      syncStatus,
+      `Đồng bộ xong sau ${batches} đợt${failures.length ? `; lỗi: ${failedNames}${more}.` : '.'}`,
+      failures.length ? 'error' : 'success',
+    );
   } catch (error) {
     if (error.status === 401) showLogin();
     else setMessage(syncStatus, `Đồng bộ dừng ở đợt ${batches + 1}. Vui lòng thử lại.`, 'error');
@@ -434,7 +477,9 @@ async function syncClients({ automatic = false } = {}) {
   }
 }
 
-syncButton.addEventListener('click', () => { void syncClients(); });
+syncButton.addEventListener('click', () => {
+  void syncClients();
+});
 
 webhookButton.addEventListener('click', async () => {
   webhookButton.disabled = true;
@@ -451,5 +496,9 @@ webhookButton.addEventListener('click', async () => {
 });
 
 loadAdmin();
-setInterval(() => { void refreshIssuedClients(); }, 30000);
-document.addEventListener('visibilitychange', () => { void refreshIssuedClients(); });
+setInterval(() => {
+  void refreshIssuedClients();
+}, 30000);
+document.addEventListener('visibilitychange', () => {
+  void refreshIssuedClients();
+});

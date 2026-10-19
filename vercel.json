@@ -2,17 +2,30 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/pages/home/index.html"
+    },
+    {
       "source": "/top",
-      "destination": "/top.html"
+      "destination": "/pages/top/index.html"
     },
     {
       "source": "/free",
-      "destination": "/index.html"
+      "destination": "/pages/home/index.html"
     },
     {
       "source": "/admin",
-      "destination": "/admin.html"
-    }
+      "destination": "/pages/admin/index.html"
+    },
+    { "source": "/index.html", "destination": "/pages/home/index.html" },
+    { "source": "/admin.html", "destination": "/pages/admin/index.html" },
+    { "source": "/top.html", "destination": "/pages/top/index.html" },
+    { "source": "/styles.css", "destination": "/assets/css/site.css" },
+    { "source": "/script.js", "destination": "/pages/home/script.js" },
+    { "source": "/admin.css", "destination": "/pages/admin/styles.css" },
+    { "source": "/admin.js", "destination": "/pages/admin/script.js" },
+    { "source": "/top.css", "destination": "/pages/top/styles.css" },
+    { "source": "/top.js", "destination": "/pages/top/script.js" }
   ],
   "routes": [
     { "src": "/lib/.*", "status": 404 },
@@ -20,6 +33,10 @@
     { "src": "/FREE_WEB\\.md", "status": 404 }
   ],
   "headers": [
+    {
+      "source": "/pages/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
     {
       "source": "/(free|admin|top)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]

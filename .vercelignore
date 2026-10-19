@@ -1,3 +1,7 @@
 test/
 FREE_WEB.md
 .env.example
+README.md
+gateway/
+.prettierignore
+.prettierrc.json

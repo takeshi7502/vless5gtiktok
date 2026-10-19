@@ -53,12 +53,24 @@ async function existingSubscription(telegramUserId) {
 }
 
 async function ordinaryReply(update) {
-  const limit = await store.fixedWindowRateLimit('bot-start-user', update.telegramUserId, START_LIMIT);
+  const limit = await store.fixedWindowRateLimit(
+    'bot-start-user',
+    update.telegramUserId,
+    START_LIMIT,
+  );
   if (!limit.allowed) return;
-  const globalLimit = await store.fixedWindowRateLimit('bot-start-global', 'all', START_GLOBAL_LIMIT);
+  const globalLimit = await store.fixedWindowRateLimit(
+    'bot-start-global',
+    'all',
+    START_GLOBAL_LIMIT,
+  );
   if (!globalLimit.allowed) return;
   const result = await existingSubscription(update.telegramUserId);
-  const message = result ? subscriptionMessage(result) : (await store.registrationEnabled()) ? startMessage() : pausedMessage();
+  const message = result
+    ? subscriptionMessage(result)
+    : (await store.registrationEnabled())
+      ? startMessage()
+      : pausedMessage();
   const sent = await sendTelegramMessage(update.chatId, message);
   if (!sent.sent) throw new Error('Telegram delivery failed');
 }
@@ -69,13 +81,16 @@ function pausedMessage() {
 
 async function registrationReply(update) {
   const limit = await store.fixedWindowRateLimit('bot-registration-admin', update.telegramUserId, {
-    limit: 10, windowSeconds: 60,
+    limit: 10,
+    windowSeconds: 60,
   });
   if (!limit.allowed) return;
-  const enabled = update.enabled === null
-    ? await store.registrationEnabled()
-    : await store.setRegistrationEnabled(update.enabled, update.updateId);
-  const message = `Đăng ký xác minh trên web: ${enabled ? 'ĐANG BẬT' : 'ĐANG TẮT'}.\n` +
+  const enabled =
+    update.enabled === null
+      ? await store.registrationEnabled()
+      : await store.setRegistrationEnabled(update.enabled, update.updateId);
+  const message =
+    `Đăng ký xác minh trên web: ${enabled ? 'ĐANG BẬT' : 'ĐANG TẮT'}.\n` +
     'Dùng /dangky on để mở, /dangky off để tạm dừng. Link đã cấp không bị ảnh hưởng.';
   const sent = await sendTelegramMessage(update.chatId, message);
   if (!sent.sent) throw new Error('Telegram delivery failed');
@@ -88,10 +103,16 @@ module.exports = async (request, response) => {
   }
 
   let update;
-  try { update = parsePrivateStartUpdate(await readJson(request)); }
-  catch { return sendJson(response, 400, { error: 'Invalid update' }); }
+  try {
+    update = parsePrivateStartUpdate(await readJson(request));
+  } catch {
+    return sendJson(response, 400, { error: 'Invalid update' });
+  }
   if (!update) return sendJson(response, 200, { ok: true });
-  if (update.type === 'registration' && (!isTelegramAdmin(update.telegramUserId) || update.updateId === null)) {
+  if (
+    update.type === 'registration' &&
+    (!isTelegramAdmin(update.telegramUserId) || update.updateId === null)
+  ) {
     return sendJson(response, 200, { ok: true });
   }
 
@@ -112,7 +133,11 @@ module.exports = async (request, response) => {
       return sendJson(response, 200, { ok: true });
     }
 
-    const limit = await store.fixedWindowRateLimit('bot-claim-user', update.telegramUserId, CLAIM_LIMIT);
+    const limit = await store.fixedWindowRateLimit(
+      'bot-claim-user',
+      update.telegramUserId,
+      CLAIM_LIMIT,
+    );
     if (!limit.allowed) {
       if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
       return sendJson(response, 200, { ok: true });
@@ -124,7 +149,11 @@ module.exports = async (request, response) => {
     }
 
     webClaimToken = update.claimToken;
-    const globalLimit = await store.fixedWindowRateLimit('bot-claim-global', 'all', CLAIM_GLOBAL_LIMIT);
+    const globalLimit = await store.fixedWindowRateLimit(
+      'bot-claim-global',
+      'all',
+      CLAIM_GLOBAL_LIMIT,
+    );
     if (!globalLimit.allowed) {
       await store.finishWebClaim(webClaimToken, { state: 'failed' });
       if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
@@ -140,7 +169,11 @@ module.exports = async (request, response) => {
       update.telegramUsername,
       update.telegramDisplayName,
     );
-    await store.finishWebClaim(webClaimToken, { state: 'ready', email: result.email, url: result.url });
+    await store.finishWebClaim(webClaimToken, {
+      state: 'ready',
+      email: result.email,
+      url: result.url,
+    });
     const sent = await sendTelegramMessage(update.chatId, verifiedMessage());
     if (!sent.sent) throw new Error('Telegram delivery failed');
     if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
@@ -152,23 +185,28 @@ module.exports = async (request, response) => {
       await store.finishWebClaim(webClaimToken, { state }).catch(() => {});
     }
     if (error.message === 'Client creation is already in progress') {
-      if (updateClaimId) await store.releaseWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
+      if (updateClaimId)
+        await store.releaseWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
       return sendJson(response, 503, { error: 'Retry later' });
     }
     if (error.message === 'Telegram delivery failed') {
-      if (updateClaimId) await store.releaseWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
+      if (updateClaimId)
+        await store.releaseWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
       return sendJson(response, 503, { error: 'Retry later' });
     }
-    const message = error.code === 'REGISTRATION_PAUSED'
-      ? pausedMessage()
-      : error.code === 'CLIENT_DISABLED'
-      ? disabledMessage()
-      : error.code === 'CLIENT_ISSUANCE_CLOSED'
-        ? 'Đợt cấp link hiện đã kết thúc. Vui lòng liên hệ quản trị viên.'
-      : 'Chưa thể tạo hoặc lấy link lúc này. Vui lòng thử lại sau.';
+    const message =
+      error.code === 'REGISTRATION_PAUSED'
+        ? pausedMessage()
+        : error.code === 'CLIENT_DISABLED'
+          ? disabledMessage()
+          : error.code === 'CLIENT_ISSUANCE_CLOSED'
+            ? 'Đợt cấp link hiện đã kết thúc. Vui lòng liên hệ quản trị viên.'
+            : 'Chưa thể tạo hoặc lấy link lúc này. Vui lòng thử lại sau.';
     const sent = await sendTelegramMessage(update.chatId, message);
-    if (sent.sent && updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
-    if (!sent.sent && updateClaimId) await store.releaseWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
+    if (sent.sent && updateClaimId)
+      await store.completeWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
+    if (!sent.sent && updateClaimId)
+      await store.releaseWebhookUpdate(update.updateId, updateClaimId).catch(() => {});
     return sendJson(response, sent.sent ? 200 : 503, { ok: false });
   }
 };

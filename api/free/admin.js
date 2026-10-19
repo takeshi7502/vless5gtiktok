@@ -1,6 +1,12 @@
 const store = require('../../lib/free-store');
 const { readJson, sendJson } = require('../../lib/free-http');
-const { authenticated, validPassword, sessionCookie, clearSessionCookie, sameOrigin } = require('../../lib/free-auth');
+const {
+  authenticated,
+  validPassword,
+  sessionCookie,
+  clearSessionCookie,
+  sameOrigin,
+} = require('../../lib/free-auth');
 const { DEFAULT_POLICY, validatePolicy } = require('../../lib/free-policy');
 const { syncBatch } = require('../../lib/free-sync');
 const { loadIssuedClients } = require('../../lib/free-registry');
@@ -56,22 +62,29 @@ async function adminData() {
   }
   const savedPolicy = await store.readPolicy();
   data.policy = savedPolicy || DEFAULT_POLICY;
-  try { validatePolicy(savedPolicy, { allowPastExpiry: true }); data.configured = true; }
-  catch { /* policy must be completed before self-service is enabled */ }
+  try {
+    validatePolicy(savedPolicy, { allowPastExpiry: true });
+    data.configured = true;
+  } catch {
+    /* policy must be completed before self-service is enabled */
+  }
   try {
     const xui = createXuiClient();
     const [inbounds, clients] = await Promise.all([availableInbounds(xui), loadIssuedClients(xui)]);
     data.inbounds = inbounds;
     data.issuedCount = clients.length;
+  } catch {
+    data.panelUnavailable = true;
   }
-  catch { data.panelUnavailable = true; }
   return data;
 }
 
 async function availableInbounds(xui) {
   return (await xui.listInboundChoices())
-    .filter((inbound) => inbound.enable === true &&
-      (inbound.protocol === 'vless' || inbound.protocol === 'vmess'))
+    .filter(
+      (inbound) =>
+        inbound.enable === true && (inbound.protocol === 'vless' || inbound.protocol === 'vmess'),
+    )
     .map(({ id, remark, protocol, port }) => ({ id, remark, protocol, port }));
 }
 
@@ -79,27 +92,49 @@ module.exports = async (request, response) => {
   if (!adminReady()) return sendJson(response, 503, { error: 'Admin is not configured' });
   if (request.method === 'GET') {
     if (!authenticated(request)) return sendJson(response, 200, { authenticated: false });
-    try { return sendJson(response, 200, await adminData()); }
-    catch { return sendJson(response, 503, { error: 'Unable to load admin data' }); }
+    try {
+      return sendJson(response, 200, await adminData());
+    } catch {
+      return sendJson(response, 503, { error: 'Unable to load admin data' });
+    }
   }
   if (request.method !== 'POST') return sendJson(response, 405, { error: 'Method not allowed' });
   if (!sameOrigin(request)) return sendJson(response, 403, { error: 'Forbidden' });
 
   let body;
-  try { body = await readJson(request); }
-  catch { return sendJson(response, 400, { error: 'Invalid request' }); }
+  try {
+    body = await readJson(request);
+  } catch {
+    return sendJson(response, 400, { error: 'Invalid request' });
+  }
   if (body.action === 'login') {
     try {
-      const limit = await store.fixedWindowRateLimit('admin-login-ip', requestIp(request), LOGIN_LIMIT);
-      if (!limit.allowed) return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(limit));
+      const limit = await store.fixedWindowRateLimit(
+        'admin-login-ip',
+        requestIp(request),
+        LOGIN_LIMIT,
+      );
+      if (!limit.allowed)
+        return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(limit));
     } catch {
       return sendJson(response, 503, { error: 'Login is temporarily unavailable' });
     }
-    if (!validPassword(body.password)) return sendJson(response, 401, { error: 'Invalid credentials' });
-    return sendJson(response, 200, { authenticated: true }, { 'set-cookie': sessionCookie(request) });
+    if (!validPassword(body.password))
+      return sendJson(response, 401, { error: 'Invalid credentials' });
+    return sendJson(
+      response,
+      200,
+      { authenticated: true },
+      { 'set-cookie': sessionCookie(request) },
+    );
   }
   if (body.action === 'logout') {
-    return sendJson(response, 200, { authenticated: false }, { 'set-cookie': clearSessionCookie(request) });
+    return sendJson(
+      response,
+      200,
+      { authenticated: false },
+      { 'set-cookie': clearSessionCookie(request) },
+    );
   }
   if (!authenticated(request)) return sendJson(response, 401, { error: 'Unauthorized' });
   if (!store.configured()) return sendJson(response, 503, { error: 'Storage is not configured' });
@@ -127,7 +162,11 @@ module.exports = async (request, response) => {
     if (body.action === 'sync') {
       const policy = validatePolicy(await store.readPolicy(), { allowPastExpiry: true });
       const cursor = body.cursor === undefined ? 0 : Number(body.cursor);
-      return sendJson(response, 200, await syncBatch(policy, createXuiClient(), cursor, store, body.afterEmail));
+      return sendJson(
+        response,
+        200,
+        await syncBatch(policy, createXuiClient(), cursor, store, body.afterEmail),
+      );
     }
     if (body.action === 'clientStatus') {
       const clients = await loadIssuedClients(createXuiClient());
@@ -140,9 +179,12 @@ module.exports = async (request, response) => {
     return sendJson(response, 400, { error: 'Unknown action' });
   } catch (error) {
     console.error('[free-web] admin action failed', error.code || error.name || 'Error');
-    const validation = error.message?.startsWith('Invalid ') ||
-      error.message?.startsWith('Select ') || error.message?.startsWith('Traffic ') ||
-      error.message?.startsWith('Expiry ') || error.message?.startsWith('Subscription ');
+    const validation =
+      error.message?.startsWith('Invalid ') ||
+      error.message?.startsWith('Select ') ||
+      error.message?.startsWith('Traffic ') ||
+      error.message?.startsWith('Expiry ') ||
+      error.message?.startsWith('Subscription ');
     return sendJson(response, validation ? 400 : 502, {
       error: validation ? error.message : 'Admin action failed',
     });

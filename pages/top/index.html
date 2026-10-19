@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#121416" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Top sử dụng | VLESS 5G TikTok</title>
+    <link rel="stylesheet" href="/assets/css/site.css?v=20261020-1" />
+    <link rel="stylesheet" href="/pages/top/styles.css?v=20261020-1" />
+    <script defer src="/pages/top/script.js?v=20261020-1"></script>
+  </head>
+  <body>
+    <main class="container ranking-page">
+      <header class="site-header">
+        <div class="site-header-brand">
+          <p class="eyebrow"><span class="pixel-spark" aria-hidden="true"></span> VLESS Gateway</p>
+          <p class="site-title">VLESS 5G TikTok</p>
+        </div>
+        <a class="top-link" href="/"
+          ><span class="ui-icon icon-arrow-up-right back-icon" aria-hidden="true"></span
+          ><span>Trang chủ</span></a
+        >
+      </header>
+
+      <section class="ranking-overview" aria-labelledby="ranking-title">
+        <p class="panel-kicker">Thống kê cộng đồng</p>
+        <h1 id="ranking-title">Top sử dụng</h1>
+        <p class="ranking-subtitle">Dung lượng upload và download trong kỳ hiện tại.</p>
+        <dl class="ranking-totals">
+          <div>
+            <dt>Tổng dung lượng</dt>
+            <dd id="total-usage">--</dd>
+          </div>
+          <div>
+            <dt>Đã phát sinh lưu lượng</dt>
+            <dd id="active-users">--</dd>
+          </div>
+          <div>
+            <dt>Client đã xác minh</dt>
+            <dd id="total-users">--</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section
+        class="ranking-list"
+        aria-labelledby="list-title"
+        aria-busy="true"
+        id="ranking-section"
+      >
+        <div class="ranking-list-heading">
+          <h2 id="list-title">20 người dùng nhiều nhất</h2>
+          <span class="period-label">Kỳ hiện tại</span>
+        </div>
+        <p id="ranking-status" class="ranking-status" role="status" aria-live="polite">
+          Đang tải thống kê...
+        </p>
+        <table class="ranking-table" id="ranking-table" hidden>
+          <thead>
+            <tr>
+              <th scope="col">Hạng</th>
+              <th scope="col">Người dùng</th>
+              <th scope="col">Đã sử dụng</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-rows"></tbody>
+        </table>
+        <div class="ranking-empty" id="ranking-empty" hidden>
+          <span class="ui-icon icon-server" aria-hidden="true"></span>
+          <p>Chưa có dữ liệu sử dụng trong kỳ này.</p>
+        </div>
+        <button id="retry-ranking" class="top-link retry-ranking" type="button" hidden>
+          Thử lại
+        </button>
+        <footer class="ranking-footer">
+          <p id="ranking-updated">Chưa có bản cập nhật.</p>
+          <p>
+            Lưu lượng trở về 0 khi client được reset trên panel. Các client có thể có kỳ reset khác
+            nhau.
+          </p>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>

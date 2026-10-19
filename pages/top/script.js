@@ -5,7 +5,10 @@ const rows = document.getElementById('ranking-rows');
 const empty = document.getElementById('ranking-empty');
 const retry = document.getElementById('retry-ranking');
 const number = new Intl.NumberFormat('vi-VN');
-const bytes = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const bytes = new Intl.NumberFormat('vi-VN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 let loading = false;
 let retryAt = 0;
 let timer;
@@ -17,7 +20,8 @@ function formatBytes(value) {
 }
 
 function render(data) {
-  if (!Array.isArray(data.users) || !Number.isFinite(data.updatedAt)) throw new Error('Invalid ranking');
+  if (!Array.isArray(data.users) || !Number.isFinite(data.updatedAt))
+    throw new Error('Invalid ranking');
   document.getElementById('total-usage').textContent = formatBytes(data.totalBytes);
   document.getElementById('active-users').textContent = number.format(data.activeCount);
   document.getElementById('total-users').textContent = number.format(data.userCount);
@@ -41,7 +45,7 @@ function render(data) {
     track.setAttribute('aria-hidden', 'true');
     const fill = document.createElement('span');
     fill.className = 'usage-fill';
-    fill.style.width = `${Math.min(100, Math.max(0, user.usedBytes / maximum * 100))}%`;
+    fill.style.width = `${Math.min(100, Math.max(0, (user.usedBytes / maximum) * 100))}%`;
     track.append(fill);
     usage.append(value, track);
     row.append(rank, name, usage);
@@ -52,10 +56,17 @@ function render(data) {
   status.dataset.error = 'false';
   status.textContent = data.stale
     ? 'Đang hiển thị bản thống kê gần nhất. Dữ liệu mới tạm thời chưa sẵn sàng.'
-    : data.incomplete ? 'Một số client chưa đọc được lưu lượng.' : 'Upload + download · Xếp theo dung lượng đã dùng';
-  document.getElementById('ranking-updated').textContent = `Cập nhật: ${new Intl.DateTimeFormat('vi-VN', {
-    dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh',
-  }).format(data.updatedAt)} (giờ Việt Nam)`;
+    : data.incomplete
+      ? 'Một số client chưa đọc được lưu lượng.'
+      : 'Upload + download · Xếp theo dung lượng đã dùng';
+  document.getElementById('ranking-updated').textContent = `Cập nhật: ${new Intl.DateTimeFormat(
+    'vi-VN',
+    {
+      dateStyle: 'short',
+      timeStyle: 'short',
+      timeZone: 'Asia/Ho_Chi_Minh',
+    },
+  ).format(data.updatedAt)} (giờ Việt Nam)`;
 }
 
 async function loadRanking() {
@@ -81,17 +92,24 @@ async function loadRanking() {
       : 'Chưa thể tải thống kê. Vui lòng thử lại sau.';
     retry.hidden = false;
     retry.disabled = Date.now() < retryAt;
-    if (retry.disabled) window.setTimeout(() => { retry.disabled = false; }, retryAt - Date.now());
+    if (retry.disabled)
+      window.setTimeout(() => {
+        retry.disabled = false;
+      }, retryAt - Date.now());
   } finally {
     loading = false;
     section.setAttribute('aria-busy', 'false');
     window.clearTimeout(timer);
     nextRefreshAt = Date.now() + delay;
-    timer = window.setTimeout(() => { void loadRanking(); }, delay);
+    timer = window.setTimeout(() => {
+      void loadRanking();
+    }, delay);
   }
 }
 
-retry.addEventListener('click', () => { void loadRanking(); });
+retry.addEventListener('click', () => {
+  void loadRanking();
+});
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && Date.now() >= nextRefreshAt) void loadRanking();
 });

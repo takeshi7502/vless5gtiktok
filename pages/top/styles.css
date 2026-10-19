@@ -1,0 +1,253 @@
+.ranking-page {
+  max-width: 900px;
+  padding-bottom: 64px;
+}
+.ranking-overview {
+  padding: 28px 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+.ranking-overview h1 {
+  margin: 6px 0;
+  font-size: 30px;
+  line-height: 1.25;
+}
+.ranking-subtitle {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.ranking-totals {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 20px;
+  margin: 28px 0 0;
+}
+.ranking-totals > div {
+  min-width: 0;
+  padding-left: 20px;
+  border-left: 1px solid var(--line-soft);
+}
+.ranking-totals > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.ranking-totals dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.ranking-totals dd {
+  margin: 6px 0 0;
+  font: 700 25px/1.3 var(--mono);
+  color: var(--mint);
+  overflow-wrap: anywhere;
+}
+.ranking-totals > div:nth-child(2) dd {
+  color: var(--gold);
+}
+.ranking-totals > div:nth-child(3) dd {
+  color: var(--coral);
+}
+.ranking-list {
+  padding-top: 24px;
+}
+.ranking-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ranking-list-heading h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.period-label {
+  color: var(--muted);
+  font: 11px var(--mono);
+  white-space: nowrap;
+}
+.ranking-status {
+  margin: 12px 0 20px;
+  min-height: 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.ranking-status[data-error='true'] {
+  color: var(--danger);
+}
+.ranking-table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.ranking-table th,
+.ranking-table td {
+  position: static !important;
+  border-left: 0;
+  vertical-align: middle;
+  background: transparent;
+}
+.ranking-table tbody tr:nth-child(even) td {
+  background: #ffffff02;
+}
+.ranking-table tbody tr:hover td {
+  background: #ffffff04;
+}
+.ranking-table th:nth-child(2),
+.ranking-table td:nth-child(2) {
+  width: auto;
+}
+.ranking-table th {
+  padding: 10px 12px;
+  border-block: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+.ranking-table th:first-child,
+.ranking-table td:first-child {
+  width: 72px;
+}
+.ranking-table th:last-child,
+.ranking-table td:last-child {
+  width: 44%;
+  text-align: right;
+}
+.ranking-table td {
+  height: 58px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 14px;
+}
+.ranking-table tbody tr:hover {
+  background: #ffffff04;
+}
+.ranking-position {
+  color: var(--muted);
+  font-family: var(--mono);
+}
+.ranking-table tr:first-child .ranking-position {
+  color: var(--gold);
+}
+.ranking-user {
+  font-family: var(--mono);
+  overflow-wrap: anywhere;
+}
+.ranking-table td.ranking-usage {
+  position: relative !important;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+}
+.usage-value {
+  position: relative;
+  z-index: 1;
+}
+.usage-track {
+  position: absolute;
+  height: 3px;
+  bottom: 8px;
+  right: 12px;
+  width: calc(100% - 24px);
+  background: var(--line-soft);
+}
+.usage-fill {
+  display: block;
+  height: 100%;
+  background: var(--mint-deep);
+}
+.ranking-table tr:first-child .usage-fill {
+  background: var(--gold);
+}
+.ranking-table tr:nth-child(2) .usage-fill {
+  background: var(--mint);
+}
+.ranking-table tr:nth-child(3) .usage-fill {
+  background: var(--coral);
+}
+.ranking-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 52px 12px;
+  border-block: 1px solid var(--line-soft);
+  color: var(--muted);
+  text-align: center;
+}
+.ranking-empty .ui-icon {
+  width: 30px;
+  height: 30px;
+}
+.ranking-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+.retry-ranking {
+  background: transparent;
+}
+.retry-ranking:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.ranking-footer {
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+}
+.ranking-footer p {
+  margin: 0 0 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.ranking-footer p:first-child {
+  color: var(--gold);
+}
+.back-icon {
+  transform: rotate(225deg);
+}
+@media (max-width: 520px) {
+  .ranking-overview {
+    padding-top: 18px;
+  }
+  .ranking-overview h1 {
+    font-size: 26px;
+  }
+  .ranking-totals {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 14px;
+  }
+  .ranking-totals > div:first-child {
+    grid-column: 1 / -1;
+  }
+  .ranking-totals > div:nth-child(2) {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .ranking-totals dd {
+    font-size: 23px;
+  }
+  .ranking-list-heading {
+    align-items: start;
+  }
+  .ranking-list-heading h2 {
+    max-width: 210px;
+    font-size: 16px;
+  }
+  .ranking-table th,
+  .ranking-table td {
+    padding-inline: 8px;
+  }
+  .ranking-table th:first-child,
+  .ranking-table td:first-child {
+    width: 52px;
+  }
+  .usage-track {
+    right: 8px;
+    width: calc(100% - 16px);
+  }
+  .ranking-page .site-title {
+    font-size: 17px;
+  }
+}

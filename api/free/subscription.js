@@ -19,9 +19,12 @@ module.exports = async (request, response) => {
 
   try {
     const result = await store.readWebClaimLimited(claimToken(request), requestIp(request), {
-      scope: 'subscription-read', ipLimit: 120, tokenLimit: 12,
+      scope: 'subscription-read',
+      ipLimit: 120,
+      tokenLimit: 12,
     });
-    if (!result.allowed) return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(result));
+    if (!result.allowed)
+      return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(result));
     const claim = result.claim;
     if (claim.state !== 'ready') {
       response.statusCode = 403;

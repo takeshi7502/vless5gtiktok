@@ -20,9 +20,12 @@ module.exports = async (request, response) => {
     if (!allowRead(request, response, 'claim-status', 600)) return;
     try {
       const result = await store.readWebClaimLimited(claimToken(request), requestIp(request), {
-        scope: 'claim-status', ipLimit: 600, tokenLimit: 90,
+        scope: 'claim-status',
+        ipLimit: 600,
+        tokenLimit: 90,
       });
-      if (!result.allowed) return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(result));
+      if (!result.allowed)
+        return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(result));
       return sendJson(response, 200, result.claim, { 'referrer-policy': 'no-referrer' });
     } catch {
       return sendJson(response, 503, { error: 'Service is unavailable' });
@@ -33,20 +36,31 @@ module.exports = async (request, response) => {
   if (!allowRead(request, response, 'claim-create', 30)) return;
 
   try {
-    const ipLimit = await store.fixedWindowRateLimit('web-claim-ip', requestIp(request), PER_IP_LIMIT);
-    if (!ipLimit.allowed) return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(ipLimit));
+    const ipLimit = await store.fixedWindowRateLimit(
+      'web-claim-ip',
+      requestIp(request),
+      PER_IP_LIMIT,
+    );
+    if (!ipLimit.allowed)
+      return sendJson(response, 429, { error: 'Try again later' }, retryHeaders(ipLimit));
 
     const status = await serviceStatus();
     if (!status.ready) return sendJson(response, 503, { error: 'Service is unavailable' });
     if (!status.registrationOpen) return sendJson(response, 403, { code: 'REGISTRATION_PAUSED' });
 
     const globalLimit = await store.fixedWindowRateLimit('web-claim-global', 'all', GLOBAL_LIMIT);
-    if (!globalLimit.allowed) return sendJson(response, 503, { error: 'Service is busy' }, retryHeaders(globalLimit));
+    if (!globalLimit.allowed)
+      return sendJson(response, 503, { error: 'Service is busy' }, retryHeaders(globalLimit));
 
     const token = await store.issueWebClaim();
-    return sendJson(response, 200, { token, botUsername: status.botUsername, expiresIn: 5 * 60 }, {
-      'referrer-policy': 'no-referrer',
-    });
+    return sendJson(
+      response,
+      200,
+      { token, botUsername: status.botUsername, expiresIn: 5 * 60 },
+      {
+        'referrer-policy': 'no-referrer',
+      },
+    );
   } catch (error) {
     if (error.code === 'REGISTRATION_PAUSED') return sendJson(response, 403, { code: error.code });
     return sendJson(response, 503, { error: 'Service is unavailable' });

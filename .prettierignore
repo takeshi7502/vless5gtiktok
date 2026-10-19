@@ -1,0 +1,10 @@
+node_modules/
+.vercel/
+coverage/
+test/
+gateway/
+assets/apps/
+assets/icons/
+package-lock.json
+node-metadata.json
+*.log
