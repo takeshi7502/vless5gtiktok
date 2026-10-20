@@ -4,6 +4,14 @@ The main page is the public entry point. Its **Xác minh Telegram** button creat
 
 This separate step prevents a bot deep link copied from a normal start message from being used to provision clients. A web claim transitions from pending to claimed to ready, keeping only the result needed by the original browser session. The claim expires after five minutes. Telegram `update_id` values are recorded for seven days, so webhook retries and duplicate delivery do not repeat client creation or the bot response.
 
+## Admin Inbound Pairs
+
+The **Inbound** section below the admin policy lists existing inbounds on the left and their generated WS counterparts on the right. For a VLESS/VMess XHTTP inbound, enter a separate WS port and press **Tạo WS**. The suggested port is unreserved by the panel's inbounds on that node, not an OS/firewall availability check. Open the chosen TCP port in the VPS/cloud firewall; if using a CDN, choose a port it supports.
+
+Creation keeps the deployment node, share address, Host, TLS certificate and other inbound settings, changes the transport to WS, and appends `ws` to the original path (`/vlessvpn` becomes `/vlessvpnws`). TLS ALPN becomes HTTP/1.1 for WebSocket. It does not copy or attach clients, alter the source inbound, or enable user transport switching. REALITY/fallback sources are not supported. The panel may reload the affected node's Xray when applying inbound changes.
+
+Pair ownership and retry tags are saved in Redis, scoped to the configured panel URL. **Xoá WS** only deletes an inbound carrying its recorded generated tag and matching node/transport. Remove it from the policy and detach clients first; deletion is blocked while it is selected or attached. Manual panel deletions are reflected after **Làm mới**. Changing the panel URL or clearing Redis removes access to those ownership records; existing inbounds are not adopted automatically.
+
 ## Static link mode
 
 The main page supports both sharing modes through `node-metadata.json`. Set `subscription.url` to one public HTTPS subscription URL to use the original static shared-link page; the Telegram panel is hidden and the browser does not call the free-link APIs. Leave `subscription.url` as an empty string to use Telegram verification and personal links. The static mode uses `/api/subscription-source` as a server-side proxy, so its node list can load without requiring CORS on the subscription host.

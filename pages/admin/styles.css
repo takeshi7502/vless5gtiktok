@@ -396,7 +396,7 @@ button:disabled {
 .inbound-option:hover {
   border-color: var(--mint-deep);
 }
-.inbound-option input {
+.inbound-option input[type='checkbox'] {
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
@@ -441,6 +441,83 @@ button:disabled {
   width: 100%;
   height: 10px;
   accent-color: var(--mint);
+}
+
+.inbound-manager-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.pair-headings,
+.inbound-pair-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.pair-headings {
+  margin: 20px 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.inbound-pairs {
+  display: grid;
+  gap: 8px;
+}
+.inbound-pair-card {
+  cursor: default;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+.inbound-pair-card > span {
+  flex: 1 1 160px;
+}
+.pair-placeholder {
+  background: transparent;
+}
+.pair-placeholder > small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.pair-port-field {
+  flex: 1 1 90px;
+  min-width: 0;
+}
+.pair-port-field label {
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.pair-port-field input {
+  min-height: 34px;
+  padding: 5px 8px;
+}
+.pair-button {
+  min-height: 34px;
+  gap: 6px;
+  padding: 7px 9px;
+  font-size: 12px;
+}
+.pair-button img {
+  width: 16px;
+  height: 16px;
+}
+.danger-button {
+  color: var(--danger);
+  border-color: #874b53;
+}
+
+@media (max-width: 420px) {
+  .inbound-pair-card {
+    padding: 8px;
+  }
+  .inbound-pair-card small {
+    font-size: 11px;
+  }
+  .inbound-pair-card .pair-button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 600px) {

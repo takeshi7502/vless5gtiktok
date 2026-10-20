@@ -29,6 +29,9 @@ const webhookStatus = document.getElementById('webhook-status');
 const configStatus = document.getElementById('config-status');
 const issuedCount = document.getElementById('issued-count');
 const issuedStatus = document.getElementById('issued-status');
+const inboundPairs = document.getElementById('inbound-pairs');
+const inboundPairStatus = document.getElementById('inbound-pair-status');
+const refreshPairsButton = document.getElementById('refresh-inbound-pairs');
 
 let configured = false;
 let dirty = false;
@@ -37,6 +40,7 @@ let storageAvailable = true;
 let syncing = false;
 let refreshingClients = false;
 let legacyExpiryDays = false;
+let pairBusy = false;
 
 function setMessage(element, message, kind = '') {
   element.textContent = message;
@@ -105,6 +109,7 @@ async function request(method = 'GET', body) {
   if (!response.ok) {
     const error = new Error(`Yêu cầu không thành công (HTTP ${response.status}).`);
     error.status = response.status;
+    if (data.code === 'INBOUND_PAIR') error.pairMessage = data.error;
     throw error;
   }
   return data;
@@ -180,6 +185,179 @@ function updateInboundCount() {
   const selected = inboundList.querySelectorAll('input[type="checkbox"]:checked').length;
   inboundCount.textContent = `${selected}/${total} đã chọn`;
 }
+
+function pairButton(label, icon, handler) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'secondary-button pair-button';
+  const image = document.createElement('img');
+  image.src = `/assets/icons/${icon}.svg`;
+  image.alt = '';
+  button.append(image, document.createTextNode(label));
+  button.addEventListener('click', handler);
+  return button;
+}
+
+function pairCard(inbound) {
+  const card = document.createElement('div');
+  card.className = 'inbound-option inbound-pair-card';
+  const text = document.createElement('span');
+  text.textContent = inbound.remark || `Inbound #${inbound.id}`;
+  const details = document.createElement('small');
+  details.textContent = inbound.missing
+    ? 'Không còn trên panel'
+    : `#${inbound.id} · ${inbound.transport} : ${inbound.port} · ${inbound.enabled ? 'Bật' : 'Tắt'}`;
+  text.append(details);
+  if (inbound.host || inbound.path) {
+    const address = document.createElement('small');
+    address.textContent = `${inbound.host || ''}${inbound.path || ''}`;
+    text.append(address);
+  }
+  card.append(text);
+  return card;
+}
+
+function renderInboundPairs(rows) {
+  inboundPairs.replaceChildren();
+  if (!Array.isArray(rows) || !rows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-inbounds';
+    empty.textContent = 'Không tìm thấy inbound.';
+    inboundPairs.append(empty);
+    return;
+  }
+  for (const row of rows) {
+    const pair = document.createElement('div');
+    pair.className = 'inbound-pair-row';
+    pair.dataset.sourceId = row.source.id;
+    const left = pairCard(row.source);
+    const right = row.ws ? pairCard(row.ws) : document.createElement('div');
+    if (!row.ws) right.className = 'inbound-option inbound-pair-card pair-placeholder';
+    if (row.ws) {
+      const remove = pairButton('Xoá WS', 'trash-2', () => {
+        if (
+          confirm(
+            `Xoá inbound WS “${row.ws.remark}” (#${row.ws.id})? Inbound gốc không bị thay đổi.`,
+          )
+        ) {
+          void mutateInboundPair('deleteWsPair', row.source.id);
+        }
+      });
+      remove.classList.add('danger-button');
+      right.append(remove);
+    } else if (row.canCreate) {
+      const field = document.createElement('div');
+      field.className = 'pair-port-field';
+      const label = document.createElement('label');
+      label.htmlFor = `ws-port-${row.source.id}`;
+      label.textContent = 'Cổng WS';
+      const port = document.createElement('input');
+      port.id = label.htmlFor;
+      port.type = 'number';
+      port.min = '1';
+      port.max = '65535';
+      port.step = '1';
+      port.required = true;
+      port.value = row.suggestedPort || '';
+      port.title = 'Cổng gợi ý chưa bị inbound khác dùng trên cùng node';
+      field.append(label, port);
+      const create = pairButton('Tạo WS', 'plus', () => {
+        if (port.reportValidity())
+          void mutateInboundPair('createWsPair', row.source.id, Number(port.value));
+      });
+      right.append(field, create);
+    } else {
+      const empty = document.createElement('small');
+      empty.textContent = row.source.missing ? 'Không có WS' : 'Không phải inbound XHTTP hỗ trợ';
+      right.append(empty);
+    }
+    pair.append(left, right);
+    inboundPairs.append(pair);
+  }
+}
+
+async function loadInboundPairs() {
+  if (pairBusy || !panelAvailable || !storageAvailable) return;
+  pairBusy = true;
+  refreshPairsButton.disabled = true;
+  inboundPairs.inert = true;
+  inboundPairs.setAttribute('aria-busy', 'true');
+  try {
+    const data = await request('POST', { action: 'inboundPairs' });
+    renderInboundPairs(data.rows);
+    setMessage(inboundPairStatus, '');
+  } catch (error) {
+    if (error.status === 401) showLogin();
+    else
+      setMessage(
+        inboundPairStatus,
+        error.pairMessage || 'Không tải được danh sách inbound. Hãy thử lại.',
+        'error',
+      );
+  } finally {
+    pairBusy = false;
+    refreshPairsButton.disabled = false;
+    inboundPairs.inert = false;
+    inboundPairs.setAttribute('aria-busy', 'false');
+  }
+}
+
+async function mutateInboundPair(action, sourceId, port) {
+  if (pairBusy) return;
+  pairBusy = true;
+  refreshPairsButton.disabled = true;
+  inboundPairs.inert = true;
+  inboundPairs.setAttribute('aria-busy', 'true');
+  setMessage(
+    inboundPairStatus,
+    action === 'createWsPair' ? 'Đang tạo inbound WS...' : 'Đang xoá inbound WS...',
+  );
+  let completed = false;
+  try {
+    await request('POST', { action, sourceId, ...(port === undefined ? {} : { port }) });
+    completed = true;
+  } catch (error) {
+    if (error.status === 401) showLogin();
+    else
+      setMessage(
+        inboundPairStatus,
+        error.pairMessage || 'Chưa xác nhận được kết quả. Bấm Làm mới trước khi thử lại.',
+        'error',
+      );
+  } finally {
+    pairBusy = false;
+    refreshPairsButton.disabled = false;
+    inboundPairs.inert = false;
+    inboundPairs.setAttribute('aria-busy', 'false');
+  }
+  if (!completed) return;
+  await loadInboundPairs();
+  try {
+    const data = await request();
+    if (data.authenticated !== true) return showLogin();
+    if (data.panelUnavailable || data.storageUnavailable) throw new Error('Panel unavailable');
+    const selected = [...inboundList.querySelectorAll('input:checked')].map((input) =>
+      Number(input.value),
+    );
+    renderInbounds(data.inbounds, selected);
+    updateIssuedCount(data.issuedCount);
+    setMessage(
+      inboundPairStatus,
+      action === 'createWsPair' ? 'Đã tạo inbound WS.' : 'Đã xoá inbound WS.',
+      'success',
+    );
+  } catch {
+    setMessage(
+      inboundPairStatus,
+      'Đã thực hiện thao tác; chưa cập nhật được danh sách cấp phát. Hãy tải lại trang.',
+      'error',
+    );
+  }
+}
+
+refreshPairsButton.addEventListener('click', () => {
+  void loadInboundPairs();
+});
 
 function updateIssuedCount(value) {
   issuedCount.textContent = Number.isSafeInteger(value) && value >= 0 ? String(value) : '--';
@@ -257,6 +435,7 @@ async function loadAdmin() {
     }
     renderPolicy(data);
     showDashboard();
+    await loadInboundPairs();
   } catch (error) {
     if (error.status === 401) showLogin();
     else showUnavailable();

@@ -13,6 +13,12 @@ const { loadIssuedClients } = require('../../lib/free-registry');
 const { createXuiClient } = require('../../lib/xui');
 const { requestIp, retryHeaders } = require('../../lib/free-request');
 const { clearStatusCache } = require('../../lib/free-service');
+const {
+  InboundPairError,
+  listInboundPairs,
+  createWsPair,
+  deleteWsPair,
+} = require('../../lib/free-inbound-pairs');
 
 const LOGIN_LIMIT = Object.freeze({ limit: 8, windowSeconds: 15 * 60 });
 
@@ -140,6 +146,33 @@ module.exports = async (request, response) => {
   if (!store.configured()) return sendJson(response, 503, { error: 'Storage is not configured' });
 
   try {
+    if (['inboundPairs', 'createWsPair', 'deleteWsPair'].includes(body.action)) {
+      const limit = await store.fixedWindowRateLimit(
+        body.action === 'inboundPairs' ? 'admin-inbound-read' : 'admin-inbound-write',
+        'panel',
+        {
+          limit: body.action === 'inboundPairs' ? 60 : 20,
+          windowSeconds: 60,
+        },
+      );
+      if (!limit.allowed)
+        return sendJson(
+          response,
+          429,
+          { error: 'Thao tác quá nhanh. Vui lòng thử lại sau.' },
+          retryHeaders(limit),
+        );
+      const xui = createXuiClient();
+      if (body.action === 'inboundPairs') {
+        return sendJson(response, 200, { rows: await listInboundPairs(xui) });
+      }
+      const result =
+        body.action === 'createWsPair'
+          ? await createWsPair(body.sourceId, body.port, xui)
+          : await deleteWsPair(body.sourceId, xui);
+      clearStatusCache();
+      return sendJson(response, 200, result);
+    }
     if (body.action === 'save') {
       const policy = validatePolicy(body.policy);
       const xui = createXuiClient();
@@ -178,6 +211,8 @@ module.exports = async (request, response) => {
     }
     return sendJson(response, 400, { error: 'Unknown action' });
   } catch (error) {
+    if (error instanceof InboundPairError)
+      return sendJson(response, error.status, { error: error.message, code: 'INBOUND_PAIR' });
     console.error('[free-web] admin action failed', error.code || error.name || 'Error');
     const validation =
       error.message?.startsWith('Invalid ') ||

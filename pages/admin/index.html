@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#121416" />
     <title>ADMIN | VLESS 5G TikTok</title>
-    <link rel="stylesheet" href="/pages/admin/styles.css?v=20261020-1" />
-    <script defer src="/pages/admin/script.js?v=20261020-1"></script>
+    <link rel="stylesheet" href="/pages/admin/styles.css?v=20261021-1" />
+    <script defer src="/pages/admin/script.js?v=20261021-1"></script>
   </head>
   <body>
     <main class="page">
@@ -258,6 +258,24 @@
               <span id="sync-progress-label" class="message"></span>
             </div>
           </form>
+        </section>
+        <section class="section inbound-manager" aria-labelledby="inbound-manager-title">
+          <div class="inbound-manager-heading">
+            <h2 id="inbound-manager-title">Inbound</h2>
+            <button id="refresh-inbound-pairs" class="secondary-button pair-button" type="button">
+              <img src="/assets/icons/rotate-cw.svg" alt="" />Làm mới
+            </button>
+          </div>
+          <div class="pair-headings" aria-hidden="true">
+            <span>XHTTP / Inbound hiện có</span><span>WebSocket</span>
+          </div>
+          <div id="inbound-pairs" class="inbound-pairs" aria-busy="false"></div>
+          <p
+            id="inbound-pair-status"
+            class="message action-message"
+            role="status"
+            aria-live="polite"
+          ></p>
         </section>
       </div>
     </main>
