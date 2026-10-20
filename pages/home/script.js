@@ -104,14 +104,14 @@ const localizedElements = [
     selector: '#setup-guide-quick .setup-steps li',
     en: [
       'In the script menu, choose <strong>1 - Quick Tunnel</strong>. Cloudflare provides a temporary <code>*.trycloudflare.com</code> hostname.',
-      'The UUID is generated on first setup. Choose Fake SNI: <code>1</code> FreeTiktok, <code>2</code> FreeVina Ko Nen (<code>172.67.168.158</code>), or <code>3</code> both (default).',
-      'The path is fixed at <code>/vless</code>; this mode uses WebSocket only. Choose link port <code>1</code> for 80, <code>2</code> for TLS 443 (default), or <code>3</code> for both. Country code is optional.',
-      'Linux creates the <code>xray-vless</code> service; VLESS links are saved in <code>frp_info.config</code> with names such as <code>FreeTiktok WS</code>. On Termux, it runs in the foreground; press <code>Ctrl+C</code> to stop it.',
+      'The UUID is generated on first setup. Choose Fake SNI: <code>1</code> FreeTiktok, <code>2</code> FreeVNPT, <code>3</code> FreeMobiFone, or <code>4</code> all three (the default for new installations). These are connection addresses, not TLS SNI.',
+      'The path defaults to <code>/vless</code>; this mode uses WebSocket only. Choose link port <code>1</code> for 80, <code>2</code> for TLS 443 (default), or <code>3</code> for both. Country code is optional.',
+      'Linux creates the <code>xray-vless</code> service; VLESS links are saved in <code>frp_info.config</code>, with a Base64 copy in <code>frp_info.base64</code>. On Termux or Windows, it runs in the foreground; press <code>Ctrl+C</code> to stop it.',
     ],
   },
   {
     selector: '#setup-guide-quick .setup-guide-callout',
-    en: '<strong>Note:</strong> the Quick Tunnel hostname changes when the tunnel restarts, so old VLESS links need to be updated.',
+    en: '<strong>Note:</strong> the Quick Tunnel hostname changes after a restart, so update old VLESS links. Main-menu option <code>7</code> configures WARP, optional ECH, a separate TLS listener, the logger and Base64 output; restart the server after saving. ECH requires support from both the domain and client.',
   },
   {
     selector: '#setup-guide-named .setup-guide-heading p',
@@ -122,13 +122,13 @@ const localizedElements = [
     en: [
       'In Cloudflare Zero Trust, open <strong>Networks -> Tunnels</strong>, create a <strong>Cloudflared</strong> tunnel, then copy its connector token.',
       'Add a <strong>Public Hostname</strong> for the domain and set its service to <code>http://127.0.0.1:8888</code>.',
-      'Choose <strong>2 - Named Cloudflare Tunnel</strong> in the script and enter the domain and token. The UUID is generated and the path is fixed at <code>/vless</code>. Choose Fake SNI and WebSocket, xHTTP, or both (default); for xHTTP, choose packet-up (default), stream-up, or stream-one.',
+      'Choose <strong>2 - Named Cloudflare Tunnel</strong> and enter the domain and token. The UUID is generated and the path defaults to <code>/vless</code>. Fake SNI: <code>1</code> FreeTiktok, <code>2</code> FreeVNPT, <code>3</code> FreeMobiFone, <code>4</code> all three. Choose WebSocket, xHTTP, or both (default); xHTTP supports auto (the new default), packet-up, stream-up, or stream-one.',
       'Choose link port 80, TLS 443 (default), or both; country code is optional. Cloudflared connects outbound, so no A/AAAA record pointing to the VPS or public Xray port is needed.',
     ],
   },
   {
     selector: '#setup-guide-named .setup-guide-callout',
-    en: '<strong>Output:</strong> VLESS links are printed and saved in <code>frp_info.config</code>, with names such as <code>FreeTiktok WS</code> or <code>FreeVina Ko Nen XHTTP</code>. This script does not create a subscription URL.',
+    en: '<strong>Output:</strong> VLESS links are saved in <code>frp_info.config</code>, with names such as <code>FreeTiktok WS</code>, <code>FreeVNPT XHTTP</code> or <code>FreeMobiFone WS</code>. A copy is saved in <code>frp_info.base64</code>; the script does not host a subscription URL. Advanced settings are in main-menu option <code>7</code>.',
   },
   {
     selector: '#setup-guide-direct .setup-guide-heading p',
@@ -139,13 +139,13 @@ const localizedElements = [
     en: [
       'In Cloudflare DNS, create an <strong>A</strong> record for the domain or subdomain pointing to the VPS IP, and turn on the orange-cloud <strong>Proxied</strong> setting.',
       'In <strong>SSL/TLS</strong>, choose <strong>Flexible</strong> for the script default configuration.',
-      'Choose <strong>3 - Direct Cloudflare</strong> and enter the domain. The default origin listens on <code>0.0.0.0:80</code>; the UUID is generated and the path is fixed at <code>/vless</code>. Choose Fake SNI and WebSocket, xHTTP, or both (default); if using xHTTP, select its mode.',
+      'Choose <strong>3 - Direct Cloudflare</strong> and enter the domain. The default origin listens on <code>0.0.0.0:80</code>; the UUID is generated and the path defaults to <code>/vless</code>. Fake SNI: <code>1</code> FreeTiktok, <code>2</code> FreeVNPT, <code>3</code> FreeMobiFone, <code>4</code> all three. Choose WebSocket, xHTTP, or both (default); the new xHTTP default is auto.',
       'Choose link port <code>2</code> for TLS 443 through Cloudflare; Direct mode does not output port-80 links. Country code is optional. Allow TCP <code>80</code> to the origin, preferably only from Cloudflare IP ranges, and confirm that DNS proxying is enabled.',
     ],
   },
   {
     selector: '#setup-guide-direct .setup-guide-callout',
-    en: '<strong>Security note:</strong> with Flexible, the Cloudflare-to-VPS leg has no TLS encryption. Use it only on infrastructure you manage and configure origin TLS when needed.',
+    en: '<strong>Security note:</strong> Flexible does not encrypt the Cloudflare-to-VPS leg. For Full (strict), use main-menu option <code>7</code> to set <code>TLS_PORT=0.0.0.0:443</code> with a valid domain certificate/key in PEM format, and allow TCP 443 to the origin. The TLS listener serves only the first transport, so choose a single transport for Full (strict). The script does not issue or renew certificates.',
   },
   {
     selector: '#host-guide-root .setup-intro',

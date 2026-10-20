@@ -764,23 +764,26 @@
                     </li>
                     <li>
                       UUID được tự sinh khi cài lần đầu. Chọn Fake SNI: <code>1</code> FreeTiktok,
-                      <code>2</code> FreeVina Ko Nen (<code>172.67.168.158</code>), hoặc
-                      <code>3</code> cả hai (mặc định).
+                      <code>2</code> FreeVNPT, <code>3</code> FreeMobiFone, hoặc <code>4</code> cả
+                      ba (mặc định khi cài mới). Đây là address kết nối, không phải TLS SNI.
                     </li>
                     <li>
-                      Path cố định <code>/vless</code>; mode này chỉ dùng WebSocket. Chọn cổng link
+                      Path mặc định <code>/vless</code>; mode này chỉ dùng WebSocket. Chọn cổng link
                       <code>1</code> cho 80, <code>2</code> cho TLS 443 (mặc định), hoặc
                       <code>3</code> cho cả hai. Mã quốc gia là tùy chọn.
                     </li>
                     <li>
                       Linux tạo service <code>xray-vless</code>; các link VLESS được lưu trong
-                      <code>frp_info.config</code>, tên theo dạng <code>FreeTiktok WS</code>. Trên
-                      Termux, tiến trình chạy trực tiếp; nhấn <code>Ctrl+C</code> để dừng.
+                      <code>frp_info.config</code>, kèm bản Base64 <code>frp_info.base64</code>.
+                      Trên Termux hoặc Windows, tiến trình chạy trực tiếp; nhấn
+                      <code>Ctrl+C</code> để dừng.
                     </li>
                   </ol>
                   <p class="setup-guide-callout">
                     <strong>Lưu ý:</strong> hostname Quick Tunnel thay đổi khi tunnel khởi động lại,
-                    vì vậy các link VLESS cũ cần được cập nhật.
+                    vì vậy các link VLESS cũ cần được cập nhật. Mục <code>7</code> trong menu chính
+                    cho phép chỉnh WARP, ECH tùy chọn, TLS riêng, logger và định dạng Base64; lưu
+                    xong cần khởi động lại server. ECH cần domain và ứng dụng cùng hỗ trợ.
                   </p>
                 </section>
 
@@ -807,9 +810,11 @@
                     </li>
                     <li>
                       Chọn <strong>2 - Named Cloudflare Tunnel</strong> trong script, nhập domain và
-                      token. UUID tự sinh, path cố định <code>/vless</code>. Chọn Fake SNI và
-                      transport: WebSocket, xHTTP hoặc cả hai (mặc định); nếu dùng xHTTP, chọn
-                      packet-up (mặc định), stream-up hoặc stream-one.
+                      token. UUID tự sinh, path mặc định <code>/vless</code>. Fake SNI:
+                      <code>1</code> FreeTiktok, <code>2</code> FreeVNPT,
+                      <code>3</code> FreeMobiFone, <code>4</code> cả ba. Chọn WebSocket, xHTTP hoặc
+                      cả hai (mặc định); xHTTP có auto (mặc định mới), packet-up, stream-up hoặc
+                      stream-one.
                     </li>
                     <li>
                       Chọn cổng link 80, TLS 443 (mặc định) hoặc cả hai; mã quốc gia là tùy chọn.
@@ -820,7 +825,9 @@
                   <p class="setup-guide-callout">
                     <strong>Đầu ra:</strong> link VLESS được in ra và lưu trong
                     <code>frp_info.config</code>, với tên như <code>FreeTiktok WS</code> hoặc
-                    <code>FreeVina Ko Nen XHTTP</code>. Script này không tạo link subscription.
+                    <code>FreeVNPT XHTTP</code>, <code>FreeMobiFone WS</code>. Có thêm file
+                    <code>frp_info.base64</code>; script không tự tạo URL subscription. Cấu hình
+                    nâng cao nằm ở mục <code>7</code> trong menu chính.
                   </p>
                 </section>
 
@@ -847,9 +854,10 @@
                     </li>
                     <li>
                       Chọn <strong>3 - Direct Cloudflare</strong>, nhập domain. Origin mặc định nghe
-                      tại <code>0.0.0.0:80</code>; UUID tự sinh và path cố định <code>/vless</code>.
-                      Chọn Fake SNI và WebSocket, xHTTP hoặc cả hai (mặc định); nếu dùng xHTTP, chọn
-                      thêm xHTTP mode.
+                      tại <code>0.0.0.0:80</code>; UUID tự sinh và path mặc định
+                      <code>/vless</code>. Fake SNI: <code>1</code> FreeTiktok,
+                      <code>2</code> FreeVNPT, <code>3</code> FreeMobiFone, <code>4</code> cả ba.
+                      Chọn WebSocket, xHTTP hoặc cả hai (mặc định); xHTTP mặc định mới là auto.
                     </li>
                     <li>
                       Chọn link cổng <code>2</code> cho TLS 443 qua Cloudflare; mode Direct không
@@ -860,8 +868,10 @@
                   </ol>
                   <p class="setup-guide-callout">
                     <strong>Lưu ý bảo mật:</strong> với Flexible, đoạn Cloudflare đến VPS không mã
-                    hóa TLS. Chỉ dùng trên hạ tầng bạn quản trị và cân nhắc cấu hình TLS origin phù
-                    hợp khi cần.
+                    hóa TLS. Muốn dùng Full (strict), vào mục <code>7</code>, đặt
+                    <code>TLS_PORT=0.0.0.0:443</code> cùng certificate/key PEM hợp lệ cho domain và
+                    mở TCP 443 tới origin. TLS riêng chỉ phục vụ transport đầu tiên, nên chọn một
+                    transport khi dùng Full (strict). Script không tự cấp hay gia hạn certificate.
                   </p>
                 </section>
               </section>
