@@ -5,6 +5,7 @@ const { subscriptionUrl, validatePolicy } = require('../../lib/free-policy');
 const { createXuiClient } = require('../../lib/xui');
 const { findIssuedClient, provisionForTelegram } = require('../../lib/free-provision');
 const { testPageUrl } = require('../../lib/free-service');
+const { flushNewUserNotifications } = require('../../lib/free-notifications');
 const {
   isTelegramWebhookSecretValid,
   isTelegramAdmin,
@@ -58,13 +59,13 @@ async function ordinaryReply(update) {
     update.telegramUserId,
     START_LIMIT,
   );
-  if (!limit.allowed) return;
+  if (!limit.allowed) return false;
   const globalLimit = await store.fixedWindowRateLimit(
     'bot-start-global',
     'all',
     START_GLOBAL_LIMIT,
   );
-  if (!globalLimit.allowed) return;
+  if (!globalLimit.allowed) return false;
   const result = await existingSubscription(update.telegramUserId);
   const message = result
     ? subscriptionMessage(result)
@@ -73,6 +74,7 @@ async function ordinaryReply(update) {
       : pausedMessage();
   const sent = await sendTelegramMessage(update.chatId, message);
   if (!sent.sent) throw new Error('Telegram delivery failed');
+  return true;
 }
 
 function pausedMessage() {
@@ -84,7 +86,7 @@ async function registrationReply(update) {
     limit: 10,
     windowSeconds: 60,
   });
-  if (!limit.allowed) return;
+  if (!limit.allowed) return false;
   const enabled =
     update.enabled === null
       ? await store.registrationEnabled()
@@ -94,6 +96,7 @@ async function registrationReply(update) {
     'Dùng /dangky on để mở, /dangky off để tạm dừng. Link đã cấp không bị ảnh hưởng.';
   const sent = await sendTelegramMessage(update.chatId, message);
   if (!sent.sent) throw new Error('Telegram delivery failed');
+  return true;
 }
 
 module.exports = async (request, response) => {
@@ -127,9 +130,12 @@ module.exports = async (request, response) => {
     }
 
     if (update.type !== 'claim') {
-      if (update.type === 'registration') await registrationReply(update);
-      else await ordinaryReply(update);
+      const replied =
+        update.type === 'registration'
+          ? await registrationReply(update)
+          : await ordinaryReply(update);
       if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
+      if (replied) await flushNewUserNotifications();
       return sendJson(response, 200, { ok: true });
     }
 
@@ -143,8 +149,9 @@ module.exports = async (request, response) => {
       return sendJson(response, 200, { ok: true });
     }
     if (!(await store.consumeWebClaim(update.claimToken))) {
-      await ordinaryReply(update);
+      const replied = await ordinaryReply(update);
       if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
+      if (replied) await flushNewUserNotifications();
       return sendJson(response, 200, { ok: true });
     }
 
@@ -177,6 +184,7 @@ module.exports = async (request, response) => {
     const sent = await sendTelegramMessage(update.chatId, verifiedMessage());
     if (!sent.sent) throw new Error('Telegram delivery failed');
     if (updateClaimId) await store.completeWebhookUpdate(update.updateId, updateClaimId);
+    await flushNewUserNotifications();
     return sendJson(response, 200, { ok: true });
   } catch (error) {
     console.error('[free-web] bot request failed', error.code || error.name || 'Error');
