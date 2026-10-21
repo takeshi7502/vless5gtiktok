@@ -384,6 +384,19 @@ function clearClientInspection() {
   deleteClientButton.disabled = true;
 }
 
+function clientTrafficBytes(row) {
+  const traffic = row && (Object.hasOwn(row, 'traffic') ? row.traffic : row.client?.traffic);
+  if (traffic === null) return 0;
+  const values = [traffic?.up, traffic?.down].map((value) => {
+    if ((typeof value !== 'number' && typeof value !== 'string') || String(value).trim() === '')
+      return null;
+    const number = Number(value);
+    return Number.isSafeInteger(number) && number >= 0 ? number : null;
+  });
+  const total = values[0] + values[1];
+  return values.includes(null) || !Number.isSafeInteger(total) ? null : total;
+}
+
 function renderClientInspection(data) {
   inspectedClient = data;
   clientDetails.hidden = false;
@@ -396,7 +409,8 @@ function renderClientInspection(data) {
   };
   const clients = data.clients || [];
   const latest = clients.at(-1);
-  const bytes = Number(latest?.traffic?.up || 0) + Number(latest?.traffic?.down || 0);
+  const bytes = clientTrafficBytes(latest);
+  const inboundIds = latest?.inboundIds ?? latest?.client.inboundIds;
   const fields = [
     ['ID', clients.map((row) => row.client.email).join(', ') || data.base],
     ['Trạng thái', states[data.status] || data.status],
@@ -407,7 +421,7 @@ function renderClientInspection(data) {
         data.owners.find((owner) => owner.label)?.label ||
         'Không còn thông tin',
     ],
-    ['Dung lượng đã dùng', latest ? `${(bytes / 1024 ** 3).toFixed(2)} GB` : '—'],
+    ['Dung lượng đã dùng', bytes !== null ? `${(bytes / 1024 ** 3).toFixed(2)} GB` : '—'],
     [
       'Giới hạn dung lượng',
       latest
@@ -418,7 +432,7 @@ function renderClientInspection(data) {
     ],
     ['Group', latest?.client.group || '—'],
     ['Bật / Tắt', latest ? (latest.client.enable === false ? 'Tắt' : 'Bật') : '—'],
-    ['Inbound', latest?.inboundIds?.join(', ') || '—'],
+    ['Inbound', inboundIds?.join(', ') || '—'],
     ['Bản ghi Redis liên quan', String(data.redisKeys.length)],
   ];
   for (const [label, value] of fields) {
