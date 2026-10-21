@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#121416" />
     <title>ADMIN | VLESS 5G TikTok</title>
-    <link rel="stylesheet" href="/pages/admin/styles.css?v=20261021-1" />
-    <script defer src="/pages/admin/script.js?v=20261021-1"></script>
+    <link rel="stylesheet" href="/pages/admin/styles.css?v=20261022-1" />
+    <script defer src="/pages/admin/script.js?v=20261022-1"></script>
   </head>
   <body>
     <main class="page">
@@ -16,6 +16,7 @@
           <p class="brand">Admin Dashboard</p>
         </div>
         <div class="header-actions">
+          <a id="client-manager-link" href="#client-manager" hidden>Quản lý client</a>
           <button
             id="register-webhook"
             class="secondary-button"
@@ -258,6 +259,67 @@
               <span id="sync-progress-label" class="message"></span>
             </div>
           </form>
+        </section>
+        <section
+          id="client-manager"
+          class="section client-manager"
+          aria-labelledby="client-manager-title"
+        >
+          <div class="section-heading">
+            <h2 id="client-manager-title">Quản lý client</h2>
+          </div>
+          <form id="client-search-form" class="client-search">
+            <div class="field">
+              <label for="client-search-id">ID client</label>
+              <input
+                id="client-search-id"
+                type="text"
+                placeholder="001"
+                maxlength="20"
+                autocomplete="off"
+                spellcheck="false"
+                required
+              />
+            </div>
+            <button id="client-search-button" class="secondary-button pair-button" type="submit">
+              <img src="/assets/icons/search.svg" alt="" />Tra cứu
+            </button>
+          </form>
+          <p
+            id="client-manager-status"
+            class="message action-message"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <div id="client-details" hidden>
+            <dl id="client-summary" class="client-summary"></dl>
+            <details class="client-raw-details">
+              <summary>Chi tiết client và Redis</summary>
+              <pre id="client-raw-data"></pre>
+            </details>
+            <button
+              id="delete-client"
+              class="secondary-button pair-button danger-button"
+              type="button"
+              disabled
+            >
+              <img src="/assets/icons/trash-2.svg" alt="" />Xoá client và dữ liệu
+            </button>
+          </div>
+          <dialog id="delete-client-dialog" aria-labelledby="delete-client-title">
+            <h2 id="delete-client-title">Xác nhận xoá client</h2>
+            <p id="delete-client-warning"></p>
+            <form method="dialog" class="delete-dialog-actions">
+              <button class="secondary-button" value="cancel">Huỷ</button>
+              <button
+                id="confirm-delete-client"
+                class="secondary-button danger-button"
+                value="delete"
+              >
+                Xoá vĩnh viễn
+              </button>
+            </form>
+          </dialog>
         </section>
         <section class="section inbound-manager" aria-labelledby="inbound-manager-title">
           <div class="inbound-manager-heading">

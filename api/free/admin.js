@@ -13,6 +13,12 @@ const { loadIssuedClients } = require('../../lib/free-registry');
 const { createXuiClient } = require('../../lib/xui');
 const { requestIp, retryHeaders } = require('../../lib/free-request');
 const { clearStatusCache } = require('../../lib/free-service');
+const { parseClientEmail } = require('../../lib/free-client-id');
+const {
+  AdminClientError,
+  inspectAdminClient,
+  deleteAdminClient,
+} = require('../../lib/free-admin-clients');
 const {
   InboundPairError,
   listInboundPairs,
@@ -146,6 +152,25 @@ module.exports = async (request, response) => {
   if (!store.configured()) return sendJson(response, 503, { error: 'Storage is not configured' });
 
   try {
+    if (['inspectClient', 'deleteClient'].includes(body.action)) {
+      const limit = await store.fixedWindowRateLimit('admin-client-management', 'panel', {
+        limit: 20,
+        windowSeconds: 60,
+      });
+      if (!limit.allowed)
+        return sendJson(
+          response,
+          429,
+          { error: 'Thao tác quá nhanh. Vui lòng thử lại sau.', code: 'ADMIN_CLIENT' },
+          retryHeaders(limit),
+        );
+      const xui = createXuiClient();
+      const result =
+        body.action === 'inspectClient'
+          ? await inspectAdminClient(body.clientId, xui)
+          : await deleteAdminClient(body.clientId, body.confirmation, xui);
+      return sendJson(response, 200, result);
+    }
     if (['inboundPairs', 'createWsPair', 'deleteWsPair'].includes(body.action)) {
       const limit = await store.fixedWindowRateLimit(
         body.action === 'inboundPairs' ? 'admin-inbound-read' : 'admin-inbound-write',
@@ -184,8 +209,8 @@ module.exports = async (request, response) => {
       const clients = await xui.listClients();
       const maxEmail = clients.reduce((max, row) => {
         const email = row.client?.email || row.email;
-        const match = /^#(\d{3,})$/.exec(email || '');
-        return match ? Math.max(max, Number(match[1])) : max;
+        const id = parseClientEmail(email);
+        return id ? Math.max(max, id.number) : max;
       }, 0);
       await store.seedCounter(maxEmail);
       await store.savePolicy(policy);
@@ -211,6 +236,8 @@ module.exports = async (request, response) => {
     }
     return sendJson(response, 400, { error: 'Unknown action' });
   } catch (error) {
+    if (error instanceof AdminClientError)
+      return sendJson(response, error.status, { error: error.message, code: 'ADMIN_CLIENT' });
     if (error instanceof InboundPairError)
       return sendJson(response, error.status, { error: error.message, code: 'INBOUND_PAIR' });
     console.error('[free-web] admin action failed', error.code || error.name || 'Error');

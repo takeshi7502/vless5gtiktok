@@ -32,6 +32,18 @@ const issuedStatus = document.getElementById('issued-status');
 const inboundPairs = document.getElementById('inbound-pairs');
 const inboundPairStatus = document.getElementById('inbound-pair-status');
 const refreshPairsButton = document.getElementById('refresh-inbound-pairs');
+const clientSearchForm = document.getElementById('client-search-form');
+const clientSearchInput = document.getElementById('client-search-id');
+const clientSearchButton = document.getElementById('client-search-button');
+const clientDetails = document.getElementById('client-details');
+const clientSummary = document.getElementById('client-summary');
+const clientRawData = document.getElementById('client-raw-data');
+const clientManagerStatus = document.getElementById('client-manager-status');
+const deleteClientButton = document.getElementById('delete-client');
+const deleteClientDialog = document.getElementById('delete-client-dialog');
+const clientManagerLink = document.getElementById('client-manager-link');
+let inspectedClient = null;
+let clientBusy = false;
 
 let configured = false;
 let dirty = false;
@@ -63,6 +75,9 @@ function showLogin() {
   dashboard.hidden = true;
   logoutButton.hidden = true;
   webhookButton.hidden = true;
+  clientManagerLink.hidden = true;
+  clearClientInspection();
+  if (deleteClientDialog.open) deleteClientDialog.close('cancel');
   setMessage(webhookStatus, '');
   configured = false;
   passwordInput.value = '';
@@ -74,6 +89,7 @@ function showDashboard() {
   dashboard.hidden = false;
   logoutButton.hidden = false;
   webhookButton.hidden = false;
+  clientManagerLink.hidden = false;
   passwordInput.value = '';
 }
 
@@ -110,6 +126,7 @@ async function request(method = 'GET', body) {
     const error = new Error(`Yêu cầu không thành công (HTTP ${response.status}).`);
     error.status = response.status;
     if (data.code === 'INBOUND_PAIR') error.pairMessage = data.error;
+    if (data.code === 'ADMIN_CLIENT') error.clientMessage = data.error;
     throw error;
   }
   return data;
@@ -357,6 +374,148 @@ async function mutateInboundPair(action, sourceId, port) {
 
 refreshPairsButton.addEventListener('click', () => {
   void loadInboundPairs();
+});
+
+function clearClientInspection() {
+  inspectedClient = null;
+  clientDetails.hidden = true;
+  clientSummary.replaceChildren();
+  clientRawData.textContent = '';
+  deleteClientButton.disabled = true;
+}
+
+function renderClientInspection(data) {
+  inspectedClient = data;
+  clientDetails.hidden = false;
+  clientSummary.replaceChildren();
+  const states = {
+    present: 'Có trên panel',
+    'redis-only': 'Chỉ còn dữ liệu Redis',
+    missing: 'Không còn client trên panel',
+    deleting: 'Đang chờ hoàn tất xoá',
+  };
+  const clients = data.clients || [];
+  const latest = clients.at(-1);
+  const bytes = Number(latest?.traffic?.up || 0) + Number(latest?.traffic?.down || 0);
+  const fields = [
+    ['ID', clients.map((row) => row.client.email).join(', ') || data.base],
+    ['Trạng thái', states[data.status] || data.status],
+    ['Telegram ID', data.telegramIds.join(', ') || 'Không còn thông tin'],
+    [
+      'Tên / Comment',
+      latest?.client.comment ||
+        data.owners.find((owner) => owner.label)?.label ||
+        'Không còn thông tin',
+    ],
+    ['Dung lượng đã dùng', latest ? `${(bytes / 1024 ** 3).toFixed(2)} GB` : '—'],
+    [
+      'Giới hạn dung lượng',
+      latest
+        ? latest.client.totalGB
+          ? `${(latest.client.totalGB / 1024 ** 3).toFixed(2)} GB`
+          : 'Không giới hạn'
+        : '—',
+    ],
+    ['Group', latest?.client.group || '—'],
+    ['Bật / Tắt', latest ? (latest.client.enable === false ? 'Tắt' : 'Bật') : '—'],
+    ['Inbound', latest?.inboundIds?.join(', ') || '—'],
+    ['Bản ghi Redis liên quan', String(data.redisKeys.length)],
+  ];
+  for (const [label, value] of fields) {
+    const group = document.createElement('div');
+    const term = document.createElement('dt');
+    const description = document.createElement('dd');
+    term.textContent = label;
+    description.textContent = value;
+    group.append(term, description);
+    clientSummary.append(group);
+  }
+  clientRawData.textContent = JSON.stringify(
+    { clients, owners: data.owners, redisKeys: data.redisKeys },
+    null,
+    2,
+  );
+  deleteClientButton.disabled = !data.canDelete;
+  deleteClientButton.lastChild.textContent =
+    data.status === 'deleting' ? 'Tiếp tục xoá và dọn dữ liệu' : 'Xoá client và dữ liệu';
+  setMessage(clientManagerStatus, data.message || '', data.message ? 'error' : '');
+}
+
+clientSearchInput.addEventListener('input', clearClientInspection);
+clientSearchForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (clientBusy) return;
+  clearClientInspection();
+  clientBusy = true;
+  clientSearchButton.disabled = true;
+  clientSearchInput.disabled = true;
+  setMessage(clientManagerStatus, 'Đang tra cứu panel và Redis...');
+  try {
+    const data = await request('POST', {
+      action: 'inspectClient',
+      clientId: clientSearchInput.value,
+    });
+    if (!dashboard.hidden) renderClientInspection(data);
+  } catch (error) {
+    if (error.status === 401) showLogin();
+    else
+      setMessage(
+        clientManagerStatus,
+        error.clientMessage || 'Không thể tra cứu. Kiểm tra ID và thử lại.',
+        'error',
+      );
+  } finally {
+    clientBusy = false;
+    clientSearchButton.disabled = false;
+    clientSearchInput.disabled = false;
+  }
+});
+
+deleteClientButton.addEventListener('click', () => {
+  if (clientBusy || !inspectedClient?.canDelete) return;
+  document.getElementById('delete-client-warning').textContent =
+    `Xoá ${inspectedClient.base} cùng các phiên bản cấp lại trên panel và dữ liệu đăng ký trong Redis? Link cũ sẽ mất hiệu lực. Số này sẽ được mở để cấp lại cho người mới.`;
+  deleteClientDialog.returnValue = 'cancel';
+  deleteClientDialog.showModal();
+});
+
+deleteClientDialog.addEventListener('close', async () => {
+  if (deleteClientDialog.returnValue !== 'delete' || clientBusy || !inspectedClient?.confirmation)
+    return;
+  const selected = inspectedClient;
+  clientBusy = true;
+  clientSearchButton.disabled = true;
+  clientSearchInput.disabled = true;
+  deleteClientButton.disabled = true;
+  setMessage(clientManagerStatus, 'Đang xoá client và dọn dữ liệu...');
+  try {
+    const result = await request('POST', {
+      action: 'deleteClient',
+      clientId: selected.base,
+      confirmation: selected.confirmation,
+    });
+    clearClientInspection();
+    setMessage(
+      clientManagerStatus,
+      `Đã xoá ${result.base} và dọn dữ liệu. Lần cấp lại tiếp theo: ${result.nextEmail}.`,
+      'success',
+    );
+    await refreshIssuedClients();
+  } catch (error) {
+    clearClientInspection();
+    if (error.status === 401) showLogin();
+    else
+      setMessage(
+        clientManagerStatus,
+        error.clientMessage ||
+          'Chưa xác nhận đã xoá xong. Hãy tra cứu lại để tiếp tục; không cần xoá Redis thủ công.',
+        'error',
+      );
+  } finally {
+    clientBusy = false;
+    clientSearchButton.disabled = false;
+    clientSearchInput.disabled = false;
+  }
 });
 
 function updateIssuedCount(value) {
